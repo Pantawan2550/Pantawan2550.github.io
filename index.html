@@ -245,7 +245,22 @@
             updateTables();
         }
 
-        window.onload = loadFromLocalStorage;
+        function resetUsedTableNumbersIfNeeded() {
+            const lastReset = localStorage.getItem("lastReset");
+            const now = Date.now();
+
+            if (!lastReset || now - parseInt(lastReset) > 24 * 60 * 60 * 1000) {
+                usedTableNumbers.clear();
+                localStorage.setItem("usedTableNumbers", JSON.stringify([]));
+                localStorage.setItem("lastReset", now.toString());
+                console.log("รีเซตหมายเลขโต๊ะที่เคยใช้งานแล้ว (ครบ 24 ชั่วโมง)");
+            }
+        }
+
+        window.onload = function () {
+            resetUsedTableNumbersIfNeeded();
+            loadFromLocalStorage();
+        };
     </script>
 </body>
 </html>
