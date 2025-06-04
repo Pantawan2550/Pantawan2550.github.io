@@ -114,12 +114,10 @@
         <div class="available-tables" id="availableTables"></div>
     </div>
 
-    <audio id="alertSound" src="https://www.soundjay.com/buttons/sounds/button-10.mp3" preload="auto"></audio>
-
     <script>
         const tables = {};
+        const usedTableNumbers = new Set();
         const DEFAULT_DURATION = 15;
-        const alertSound = document.getElementById("alertSound");
 
         setInterval(() => {
             document.getElementById("clock").textContent = `เวลา: ${getThaiTime()}`;
@@ -153,7 +151,13 @@
                 return;
             }
 
+            if (usedTableNumbers.has(tableNumber)) {
+                showNotification(`โต๊ะ ${tableNumber} เคยใช้งานไปแล้ว ไม่สามารถใช้ซ้ำได้`);
+                return;
+            }
+
             tables[tableNumber] = { remainingTime: noLimit ? null : duration, noLimit };
+            usedTableNumbers.add(tableNumber);
             saveToLocalStorage();
             showNotification(`[${getThaiTime()}] ลูกค้าเข้าไปที่โต๊ะ ${tableNumber} ${noLimit ? "(ไม่จำกัดเวลา)" : `และจะออกใน ${duration} วินาที`}`);
             updateTables();
@@ -165,7 +169,6 @@
                         updateTables();
                         saveToLocalStorage();
                     } else if (tables[tableNumber] && tables[tableNumber].remainingTime === 0) {
-                        alertSound.play();
                         clearInterval(interval);
                         removeTable(tableNumber);
                     }
@@ -197,20 +200,24 @@
                 tablesContainer.appendChild(tableDiv);
             });
 
-            document.getElementById("availableTables").textContent = `จำนวนโต๊ะที่ใช้งานอยู่: ${Object.keys(tables).length}`;
+            document.getElementById("availableTables").textContent = `จำนวนโต๊ะที่กำลังใช้งานอยู่: ${Object.keys(tables).length}`;
         }
 
         function saveToLocalStorage() {
             localStorage.setItem("tables", JSON.stringify(tables));
+            localStorage.setItem("usedTableNumbers", JSON.stringify([...usedTableNumbers]));
         }
 
         function loadFromLocalStorage() {
-            const saved = localStorage.getItem("tables");
-            if (saved) {
-                const restoredTables = JSON.parse(saved);
+            const savedTables = localStorage.getItem("tables");
+            const savedUsedNumbers = localStorage.getItem("usedTableNumbers");
+
+            if (savedTables) {
+                const restoredTables = JSON.parse(savedTables);
                 Object.keys(restoredTables).forEach(tableNumber => {
                     const table = restoredTables[tableNumber];
                     tables[tableNumber] = table;
+
                     if (!table.noLimit && table.remainingTime > 0) {
                         const interval = setInterval(() => {
                             if (tables[tableNumber] && tables[tableNumber].remainingTime > 0) {
@@ -218,15 +225,20 @@
                                 updateTables();
                                 saveToLocalStorage();
                             } else if (tables[tableNumber] && tables[tableNumber].remainingTime === 0) {
-                                alertSound.play();
                                 clearInterval(interval);
                                 removeTable(tableNumber);
                             }
                         }, 1000);
                     }
                 });
-                updateTables();
             }
+
+            if (savedUsedNumbers) {
+                const restoredUsed = JSON.parse(savedUsedNumbers);
+                restoredUsed.forEach(num => usedTableNumbers.add(num));
+            }
+
+            updateTables();
         }
 
         window.onload = () => {
