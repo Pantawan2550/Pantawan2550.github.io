@@ -106,7 +106,6 @@
                 <label for="duration">ระยะเวลา (วินาที):</label>
                 <input type="number" id="duration" placeholder="ระยะเวลา" min="1" value="15" />
             </div>
-            <label><input type="checkbox" id="noLimit" /> ไม่จำกัดเวลา</label>
             <button onclick="addTable()">เพิ่มโต๊ะ</button>
         </div>
         <div class="notification" id="notification"></div>
@@ -139,7 +138,6 @@
         function addTable() {
             const tableNumber = parseInt(document.getElementById("tableNumber").value);
             const duration = parseInt(document.getElementById("duration").value) || DEFAULT_DURATION;
-            const noLimit = document.getElementById("noLimit").checked;
 
             if (isNaN(tableNumber) || tableNumber < 1) {
                 showNotification("หมายเลขโต๊ะต้องเป็นเลขที่มากกว่า 0!");
@@ -156,34 +154,28 @@
                 return;
             }
 
-            tables[tableNumber] = { remainingTime: noLimit ? null : duration, noLimit };
+            tables[tableNumber] = { remainingTime: duration };
             usedTableNumbers.add(tableNumber);
             saveToLocalStorage();
             showNotification(
-                `[${getThaiTime()}] ลูกค้าเข้าไปที่โต๊ะ ${tableNumber} ${noLimit ? "(ไม่จำกัดเวลา)" : `และจะออกใน ${duration} วินาที`}`
+                `[${getThaiTime()}] ลูกค้าเข้าไปที่โต๊ะ ${tableNumber} และจะออกใน ${duration} วินาที`
             );
             updateTables();
 
-            if (!noLimit) {
-                const interval = setInterval(() => {
-                    if (tables[tableNumber] && tables[tableNumber].remainingTime > 0) {
-                        tables[tableNumber].remainingTime--;
-                        updateTables();
-                        saveToLocalStorage();
-                    } else if (tables[tableNumber] && tables[tableNumber].remainingTime === 0) {
-                        clearInterval(interval);
-                        removeTable(tableNumber);
-                    }
-                }, 1000);
-            }
+            const interval = setInterval(() => {
+                if (tables[tableNumber] && tables[tableNumber].remainingTime > 0) {
+                    tables[tableNumber].remainingTime--;
+                    updateTables();
+                    saveToLocalStorage();
+                } else if (tables[tableNumber] && tables[tableNumber].remainingTime === 0) {
+                    clearInterval(interval);
+                    removeTable(tableNumber);
+                }
+            }, 1000);
         }
 
         function removeTable(tableNumber) {
             if (tables[tableNumber] !== undefined) {
-                if (tables[tableNumber].noLimit) {
-                    showNotification(`โต๊ะ ${tableNumber} เป็นโต๊ะไม่จำกัดเวลา ไม่สามารถลบได้`);
-                    return;
-                }
                 delete tables[tableNumber];
                 showNotification(`[${getThaiTime()}] ลูกค้าโต๊ะ ${tableNumber} ออกไป`);
                 updateTables();
@@ -200,8 +192,8 @@
                 tableDiv.classList.add("table");
                 tableDiv.innerHTML = `
                     <p>โต๊ะ ${tableNumber}</p>
-                    <p>${tableData.noLimit ? "ไม่จำกัดเวลา" : `เหลือเวลา: ${tableData.remainingTime} วินาที`}</p>
-                    ${tableData.noLimit ? '' : `<button class="remove-btn" onclick="removeTable(${tableNumber})">ออก</button>`}
+                    <p>เหลือเวลา: ${tableData.remainingTime} วินาที</p>
+                    <button class="remove-btn" onclick="removeTable(${tableNumber})">ออก</button>
                 `;
                 tablesContainer.appendChild(tableDiv);
             });
@@ -224,7 +216,7 @@
                     const table = restoredTables[tableNumber];
                     tables[tableNumber] = table;
 
-                    if (!table.noLimit && table.remainingTime > 0) {
+                    if (table.remainingTime > 0) {
                         const interval = setInterval(() => {
                             if (tables[tableNumber] && tables[tableNumber].remainingTime > 0) {
                                 tables[tableNumber].remainingTime--;
