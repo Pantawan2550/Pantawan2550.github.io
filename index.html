@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการโต๊ะ (Table Management System)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #0056b3;
+            text-align: center;
+        }
+        p {
+            line-height: 1.6;
+        }
+        .table-status {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .table-status h2 {
+            color: #0056b3;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background-color: #e9ecef;
+            margin-bottom: 10px;
+            padding: 10px 15px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .occupied {
+            background-color: #d4edda;
+            color: #155724;
+            font-weight: bold;
+        }
+        .available {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ระบบจัดการโต๊ะอัตโนมัติ (Automated Table Management System)</h1>
+        <p>ระบบนี้จำลองการจัดการโต๊ะในร้านอาหารหรือสถานประกอบการอื่นๆ โดยลูกค้าจะ <strong>เข้า (arrive)</strong> และ <strong>ออก (depart)</strong> จากโต๊ะอัตโนมัติหลังจากช่วงเวลาที่กำหนด หรือสามารถออกได้ทันที</p>
+        <p>คุณสมบัติหลักของระบบ:</p>
+        <ul>
+            <li><strong>การมาถึงของลูกค้า:</strong> ลูกค้าสามารถระบุหมายเลขโต๊ะและระยะเวลาที่จะอยู่ในร้านได้</li>
+            <li><strong>การออกจากลูกค้า:</strong> ลูกค้าสามารถออกจากโต๊ะได้ทันที หรือระบบจะนำออกอัตโนมัติเมื่อครบกำหนดเวลา</li>
+            <li><strong>การจัดการจำนวนโต๊ะ:</strong> มีการจำกัดจำนวนโต๊ะสูงสุดที่สามารถรองรับได้ (ปัจจุบัน: 30 โต๊ะ)</li>
+            <li><strong>การทำงานแบบ Multithreading:</strong> ใช้เธรดเพื่อจัดการการออกจากลูกค้าอัตโนมัติ ทำให้ระบบสามารถรับคำสั่งใหม่ได้ตลอดเวลา</li>
+            <li><strong>แสดงเวลาประเทศไทย:</strong> การแสดงผลเวลาเป็นเวลาประเทศไทย</li>
+        </ul>
+
+        <div class="table-status">
+            <h2>สถานะโต๊ะ (ตัวอย่าง)</h2>
+            <p>นี่คือตัวอย่างสถานะของโต๊ะ หากเชื่อมต่อกับระบบจริง ข้อมูลจะถูกอัปเดตแบบเรียลไทม์</p>
+            <ul>
+                <li class="occupied">
+                    <span>โต๊ะ 101: มีลูกค้า</span>
+                    <span>(จะออกใน 10 วินาที)</span>
+                </li>
+                <li class="available">
+                    <span>โต๊ะ 102: ว่าง</span>
+                    <span></span>
+                </li>
+                <li class="occupied">
+                    <span>โต๊ะ 103: มีลูกค้า</span>
+                    <span>(จะออกใน 5 วินาที)</span>
+                </li>
+                <li class="available">
+                    <span>โต๊ะ 104: ว่าง</span>
+                    <span></span>
+                </li>
+                </ul>
+        </div>
+
+        <p><strong>หมายเหตุ:</strong> หน้านี้เป็นเพียงส่วนหน้า (frontend) ที่แสดงข้อมูล หากต้องการให้หน้านี้โต้ตอบกับสคริปต์ Python ของคุณ จะต้องใช้เทคโนโลยีฝั่งเซิร์ฟเวอร์ เช่น Flask หรือ Django เพื่อสร้าง API.</p>
+    </div>
+</body>
+</html>
