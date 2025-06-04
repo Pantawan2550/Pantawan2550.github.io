@@ -19,6 +19,17 @@
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+    .nav-link {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #6c757d;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      text-decoration: none;
     }
     .table-container {
       display: flex;
@@ -49,6 +60,7 @@
 </head>
 <body>
   <div class="container">
+    <a class="nav-link" href="index.html">กลับไปจัดการโต๊ะ</a>
     <div id="clock"></div>
     <h1>สถานะโต๊ะที่กำลังใช้งาน</h1>
     <div class="table-container" id="tables"></div>
@@ -67,39 +79,31 @@
     }
 
     function updateTables() {
-      const tablesContainer = document.getElementById("tables");
-      tablesContainer.innerHTML = "";
-
+      const container = document.getElementById("tables");
+      container.innerHTML = "";
       Object.keys(tables).forEach(tableNumber => {
-        const tableData = tables[tableNumber];
-        const tableDiv = document.createElement("div");
-        tableDiv.classList.add("table");
-        tableDiv.innerHTML = `
+        const t = tables[tableNumber];
+        const div = document.createElement("div");
+        div.classList.add("table");
+        div.innerHTML = `
           <p>โต๊ะ ${tableNumber}</p>
-          <p>${tableData.noLimit ? "ไม่จำกัดเวลา" : `เหลือเวลา: ${tableData.remainingTime} วินาที`}</p>
+          <p>เหลือเวลา: ${t.remainingTime} วินาที</p>
         `;
-        tablesContainer.appendChild(tableDiv);
+        container.appendChild(div);
       });
 
-      document.getElementById("availableTables").textContent =
-        `จำนวนโต๊ะที่กำลังใช้งานอยู่: ${Object.keys(tables).length}`;
+      document.getElementById("availableTables").textContent = `จำนวนโต๊ะที่กำลังใช้งาน: ${Object.keys(tables).length}`;
     }
 
     function loadFromLocalStorage() {
-      const savedTables = localStorage.getItem("tables");
-      if (savedTables) {
-        const restoredTables = JSON.parse(savedTables);
-        Object.keys(restoredTables).forEach(tableNumber => {
-          const table = restoredTables[tableNumber];
-          tables[tableNumber] = table;
-        });
+      const saved = localStorage.getItem("tables");
+      if (saved) {
+        Object.assign(tables, JSON.parse(saved));
       }
       updateTables();
     }
 
-    window.onload = () => {
-      loadFromLocalStorage();
-    };
+    window.onload = loadFromLocalStorage;
   </script>
 </body>
 </html>
