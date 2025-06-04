@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>สถานะโต๊ะ</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .table-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .table {
+      border: 2px solid #333;
+      padding: 15px;
+      border-radius: 10px;
+      background-color: lightgreen;
+      width: 120px;
+      text-align: center;
+      font-weight: bold;
+    }
+    .available-tables {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+    #clock {
+      font-size: 20px;
+      margin-bottom: 10px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="clock"></div>
+    <h1>สถานะโต๊ะที่กำลังใช้งาน</h1>
+    <div class="table-container" id="tables"></div>
+    <div class="available-tables" id="availableTables"></div>
+  </div>
+
+  <script>
+    const tables = {};
+
+    setInterval(() => {
+      document.getElementById("clock").textContent = `เวลา: ${getThaiTime()}`;
+    }, 1000);
+
+    function getThaiTime() {
+      return new Date().toLocaleTimeString("th-TH", { hour12: false });
+    }
+
+    function updateTables() {
+      const tablesContainer = document.getElementById("tables");
+      tablesContainer.innerHTML = "";
+
+      Object.keys(tables).forEach(tableNumber => {
+        const tableData = tables[tableNumber];
+        const tableDiv = document.createElement("div");
+        tableDiv.classList.add("table");
+        tableDiv.innerHTML = `
+          <p>โต๊ะ ${tableNumber}</p>
+          <p>${tableData.noLimit ? "ไม่จำกัดเวลา" : `เหลือเวลา: ${tableData.remainingTime} วินาที`}</p>
+        `;
+        tablesContainer.appendChild(tableDiv);
+      });
+
+      document.getElementById("availableTables").textContent =
+        `จำนวนโต๊ะที่กำลังใช้งานอยู่: ${Object.keys(tables).length}`;
+    }
+
+    function loadFromLocalStorage() {
+      const savedTables = localStorage.getItem("tables");
+      if (savedTables) {
+        const restoredTables = JSON.parse(savedTables);
+        Object.keys(restoredTables).forEach(tableNumber => {
+          const table = restoredTables[tableNumber];
+          tables[tableNumber] = table;
+        });
+      }
+      updateTables();
+    }
+
+    window.onload = () => {
+      loadFromLocalStorage();
+    };
+  </script>
+</body>
+</html>
