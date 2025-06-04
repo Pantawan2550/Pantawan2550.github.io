@@ -19,6 +19,17 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .nav-link {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #007bff;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            text-decoration: none;
         }
         .input-group {
             display: flex;
@@ -95,6 +106,7 @@
 </head>
 <body>
     <div class="container">
+        <a class="nav-link" href="status.html">ดูสถานะโต๊ะ</a>
         <div id="clock"></div>
         <h1>ระบบจัดการโต๊ะ</h1>
         <div class="input-group">
@@ -157,9 +169,7 @@
             tables[tableNumber] = { remainingTime: duration };
             usedTableNumbers.add(tableNumber);
             saveToLocalStorage();
-            showNotification(
-                `[${getThaiTime()}] ลูกค้าเข้าไปที่โต๊ะ ${tableNumber} และจะออกใน ${duration} วินาที`
-            );
+            showNotification(`[${getThaiTime()}] ลูกค้าเข้าโต๊ะ ${tableNumber} จะออกใน ${duration} วินาที`);
             updateTables();
 
             const interval = setInterval(() => {
@@ -167,7 +177,7 @@
                     tables[tableNumber].remainingTime--;
                     updateTables();
                     saveToLocalStorage();
-                } else if (tables[tableNumber] && tables[tableNumber].remainingTime === 0) {
+                } else if (tables[tableNumber]) {
                     clearInterval(interval);
                     removeTable(tableNumber);
                 }
@@ -175,30 +185,29 @@
         }
 
         function removeTable(tableNumber) {
-            if (tables[tableNumber] !== undefined) {
+            if (tables[tableNumber]) {
                 delete tables[tableNumber];
-                showNotification(`[${getThaiTime()}] ลูกค้าโต๊ะ ${tableNumber} ออกไป`);
+                showNotification(`[${getThaiTime()}] โต๊ะ ${tableNumber} ว่างแล้ว`);
                 updateTables();
                 saveToLocalStorage();
             }
         }
 
         function updateTables() {
-            const tablesContainer = document.getElementById("tables");
-            tablesContainer.innerHTML = "";
-            Object.keys(tables).forEach((tableNumber) => {
-                const tableData = tables[tableNumber];
-                const tableDiv = document.createElement("div");
-                tableDiv.classList.add("table");
-                tableDiv.innerHTML = `
+            const container = document.getElementById("tables");
+            container.innerHTML = "";
+            Object.keys(tables).forEach(tableNumber => {
+                const t = tables[tableNumber];
+                const div = document.createElement("div");
+                div.classList.add("table");
+                div.innerHTML = `
                     <p>โต๊ะ ${tableNumber}</p>
-                    <p>เหลือเวลา: ${tableData.remainingTime} วินาที</p>
+                    <p>เหลือเวลา: ${t.remainingTime} วินาที</p>
                     <button class="remove-btn" onclick="removeTable(${tableNumber})">ออก</button>
                 `;
-                tablesContainer.appendChild(tableDiv);
+                container.appendChild(div);
             });
-
-            document.getElementById("availableTables").textContent = `จำนวนโต๊ะที่กำลังใช้งานอยู่: ${Object.keys(tables).length}`;
+            document.getElementById("availableTables").textContent = `จำนวนโต๊ะที่กำลังใช้งาน: ${Object.keys(tables).length}`;
         }
 
         function saveToLocalStorage() {
@@ -207,41 +216,36 @@
         }
 
         function loadFromLocalStorage() {
-            const savedTables = localStorage.getItem("tables");
-            const savedUsedNumbers = localStorage.getItem("usedTableNumbers");
+            const saved = localStorage.getItem("tables");
+            const used = localStorage.getItem("usedTableNumbers");
 
-            if (savedTables) {
-                const restoredTables = JSON.parse(savedTables);
-                Object.keys(restoredTables).forEach((tableNumber) => {
-                    const table = restoredTables[tableNumber];
-                    tables[tableNumber] = table;
-
-                    if (table.remainingTime > 0) {
-                        const interval = setInterval(() => {
-                            if (tables[tableNumber] && tables[tableNumber].remainingTime > 0) {
+            if (saved) {
+                const restored = JSON.parse(saved);
+                Object.keys(restored).forEach(tableNumber => {
+                    tables[tableNumber] = restored[tableNumber];
+                    const interval = setInterval(() => {
+                        if (tables[tableNumber]) {
+                            if (tables[tableNumber].remainingTime > 0) {
                                 tables[tableNumber].remainingTime--;
                                 updateTables();
                                 saveToLocalStorage();
-                            } else if (tables[tableNumber] && tables[tableNumber].remainingTime === 0) {
+                            } else {
                                 clearInterval(interval);
                                 removeTable(tableNumber);
                             }
-                        }, 1000);
-                    }
+                        }
+                    }, 1000);
                 });
             }
 
-            if (savedUsedNumbers) {
-                const restoredUsed = JSON.parse(savedUsedNumbers);
-                restoredUsed.forEach((num) => usedTableNumbers.add(num));
+            if (used) {
+                JSON.parse(used).forEach(num => usedTableNumbers.add(num));
             }
 
             updateTables();
         }
 
-        window.onload = () => {
-            loadFromLocalStorage();
-        };
+        window.onload = loadFromLocalStorage;
     </script>
 </body>
 </html>
