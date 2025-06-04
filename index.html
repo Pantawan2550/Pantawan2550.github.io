@@ -114,28 +114,20 @@
         <div class="available-tables" id="availableTables"></div>
     </div>
 
-
-    <!-- เสียงเตือนเมื่อหมดเวลา -->
     <audio id="alertSound" src="https://www.soundjay.com/buttons/sounds/button-10.mp3" preload="auto"></audio>
-
 
     <script>
         const tables = {};
-        const MAX_TABLES = 50;
         const DEFAULT_DURATION = 15;
         const alertSound = document.getElementById("alertSound");
 
-
-        // แสดงเวลาจริง
         setInterval(() => {
             document.getElementById("clock").textContent = `เวลา: ${getThaiTime()}`;
         }, 1000);
 
-
         function getThaiTime() {
             return new Date().toLocaleTimeString("th-TH", { hour12: false });
         }
-
 
         function showNotification(message) {
             const notification = document.getElementById("notification");
@@ -146,42 +138,25 @@
             }, 3000);
         }
 
-
         function addTable() {
             const tableNumber = parseInt(document.getElementById("tableNumber").value);
             const duration = parseInt(document.getElementById("duration").value) || DEFAULT_DURATION;
             const noLimit = document.getElementById("noLimit").checked;
-
 
             if (isNaN(tableNumber) || tableNumber < 1) {
                 showNotification("หมายเลขโต๊ะต้องเป็นเลขที่มากกว่า 0!");
                 return;
             }
 
-
-            if (tableNumber > MAX_TABLES) {
-                showNotification(`หมายเลขโต๊ะสูงสุดคือ ${MAX_TABLES}`);
-                return;
-            }
-
-
             if (tables[tableNumber]) {
                 showNotification(`โต๊ะ ${tableNumber} มีลูกค้าอยู่แล้ว!`);
                 return;
             }
 
-
-            if (Object.keys(tables).length >= MAX_TABLES) {
-                showNotification(`ขออภัย โต๊ะเต็มแล้ว!`);
-                return;
-            }
-
-
             tables[tableNumber] = { remainingTime: noLimit ? null : duration, noLimit };
             saveToLocalStorage();
             showNotification(`[${getThaiTime()}] ลูกค้าเข้าไปที่โต๊ะ ${tableNumber} ${noLimit ? "(ไม่จำกัดเวลา)" : `และจะออกใน ${duration} วินาที`}`);
             updateTables();
-
 
             if (!noLimit) {
                 const interval = setInterval(() => {
@@ -198,7 +173,6 @@
             }
         }
 
-
         function removeTable(tableNumber) {
             if (tables[tableNumber] !== undefined) {
                 delete tables[tableNumber];
@@ -207,7 +181,6 @@
                 saveToLocalStorage();
             }
         }
-
 
         function updateTables() {
             const tablesContainer = document.getElementById("tables");
@@ -224,16 +197,12 @@
                 tablesContainer.appendChild(tableDiv);
             });
 
-
-            const availableTables = MAX_TABLES - Object.keys(tables).length;
-            document.getElementById("availableTables").textContent = `โต๊ะว่าง: ${availableTables} / ${MAX_TABLES}`;
+            document.getElementById("availableTables").textContent = `จำนวนโต๊ะที่ใช้งานอยู่: ${Object.keys(tables).length}`;
         }
-
 
         function saveToLocalStorage() {
             localStorage.setItem("tables", JSON.stringify(tables));
         }
-
 
         function loadFromLocalStorage() {
             const saved = localStorage.getItem("tables");
@@ -260,8 +229,6 @@
             }
         }
 
-
-        // โหลดข้อมูลเมื่อเปิดหน้าเว็บ
         window.onload = () => {
             loadFromLocalStorage();
         };
