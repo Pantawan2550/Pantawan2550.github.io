@@ -1,266 +1,202 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ระบบจัดการโต๊ะ</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 600px;
-            margin: auto;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            position: relative;
-        }
-        .nav-link {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #007bff;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            text-decoration: none;
-        }
-        .input-group {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-            align-items: center;
-        }
-        .input-item {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            max-width: 300px;
-        }
-        label {
-            white-space: nowrap;
-        }
-        button {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .table-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        .table {
-            border: 2px solid #333;
-            padding: 15px;
-            border-radius: 10px;
-            background-color: lightgreen;
-            width: 120px;
-            text-align: center;
-            font-weight: bold;
-            position: relative;
-        }
-        .remove-btn {
-            background-color: red;
-            color: white;
-            border: none;
-            padding: 5px;
-            border-radius: 5px;
-            cursor: pointer;
-            position: absolute;
-            bottom: 5px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        .notification {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #333;
-            color: white;
-            border-radius: 5px;
-            display: none;
-        }
-        .available-tables {
-            margin-top: 20px;
-            font-size: 18px;
-        }
-        #clock {
-            font-size: 20px;
-            margin-bottom: 10px;
-            color: #555;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ระบบจัดการโต๊ะ (แบบ Real-time)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .input-group {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .input-item {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 300px;
+    }
+    label {
+      white-space: nowrap;
+    }
+    button {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .table-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+    .table {
+      border: 2px solid #333;
+      padding: 10px;
+      border-radius: 10px;
+      background-color: lightgreen;
+      width: 120px;
+      text-align: center;
+      position: relative;
+    }
+    .remove-btn {
+      background-color: red;
+      color: white;
+      border: none;
+      padding: 5px;
+      border-radius: 5px;
+      cursor: pointer;
+      position: absolute;
+      bottom: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .notification {
+      margin-top: 20px;
+      background-color: #333;
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      display: none;
+    }
+    #clock {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <a class="nav-link" href="status.html">ดูสถานะโต๊ะ</a>
-        <div id="clock"></div>
-        <h1>ระบบจัดการโต๊ะ</h1>
-        <div class="input-group">
-            <div class="input-item">
-                <label for="tableNumber">หมายเลขโต๊ะ:</label>
-                <input type="number" id="tableNumber" placeholder="หมายเลขโต๊ะ" min="1" />
-            </div>
-            <div class="input-item">
-                <label for="duration">ระยะเวลา (วินาที):</label>
-                <input type="number" id="duration" placeholder="ระยะเวลา" min="1" value="15" />
-            </div>
-            <button onclick="addTable()">เพิ่มโต๊ะ</button>
-        </div>
-        <div class="notification" id="notification"></div>
-        <div class="table-container" id="tables"></div>
-        <div class="available-tables" id="availableTables"></div>
+  <div class="container">
+    <div id="clock"></div>
+    <h1>ระบบจัดการโต๊ะ (Real-time)</h1>
+    <div class="input-group">
+      <div class="input-item">
+        <label for="tableNumber">หมายเลขโต๊ะ:</label>
+        <input type="number" id="tableNumber" placeholder="หมายเลขโต๊ะ" min="1">
+      </div>
+      <div class="input-item">
+        <label for="duration">ระยะเวลา (วินาที):</label>
+        <input type="number" id="duration" value="15" min="1">
+      </div>
+      <button onclick="addTable()">เพิ่มโต๊ะ</button>
     </div>
+    <div class="notification" id="notification"></div>
+    <div class="table-container" id="tables"></div>
+  </div>
 
-    <script>
-        const tables = {};
-        const usedTableNumbers = new Set();
-        const DEFAULT_DURATION = 15;
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-        setInterval(() => {
-            document.getElementById("clock").textContent = `เวลา: ${getThaiTime()}`;
-        }, 1000);
+  <script>
+    // 🔧 ใส่ config ของ Firebase โปรเจกต์ของคุณที่นี่
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
 
-        function getThaiTime() {
-            return new Date().toLocaleTimeString("th-TH", { hour12: false });
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const showNotification = (msg) => {
+      const el = document.getElementById("notification");
+      el.textContent = msg;
+      el.style.display = "block";
+      setTimeout(() => (el.style.display = "none"), 3000);
+    };
+
+    const addTable = () => {
+      const number = parseInt(document.getElementById("tableNumber").value);
+      const duration = parseInt(document.getElementById("duration").value) || 15;
+
+      if (isNaN(number) || number < 1) {
+        showNotification("กรุณากรอกหมายเลขโต๊ะให้ถูกต้อง");
+        return;
+      }
+
+      const ref = db.ref("tables/" + number);
+      ref.once("value").then(snapshot => {
+        if (snapshot.exists()) {
+          showNotification(`โต๊ะ ${number} ถูกใช้งานแล้ว`);
+        } else {
+          const now = Date.now();
+          ref.set({ startTime: now, duration: duration });
+          showNotification(`เพิ่มโต๊ะ ${number} แล้ว`);
+        }
+      });
+    };
+
+    const removeTable = (number) => {
+      db.ref("tables/" + number).remove();
+      showNotification(`ลบโต๊ะ ${number}`);
+    };
+
+    const renderTables = (tables) => {
+      const container = document.getElementById("tables");
+      container.innerHTML = "";
+
+      Object.entries(tables || {}).forEach(([number, data]) => {
+        const elapsed = Math.floor((Date.now() - data.startTime) / 1000);
+        const remaining = Math.max(0, data.duration - elapsed);
+
+        if (remaining <= 0) {
+          removeTable(number);
+          return;
         }
 
-        function showNotification(message) {
-            const notification = document.getElementById("notification");
-            notification.textContent = message;
-            notification.style.display = "block";
-            setTimeout(() => {
-                notification.style.display = "none";
-            }, 3000);
-        }
+        const div = document.createElement("div");
+        div.className = "table";
+        div.innerHTML = `
+          <p>โต๊ะ ${number}</p>
+          <p>เหลือเวลา: ${remaining} วินาที</p>
+          <button class="remove-btn" onclick="removeTable(${number})">ออก</button>
+        `;
+        container.appendChild(div);
+      });
+    };
 
-        function addTable() {
-            const tableNumber = parseInt(document.getElementById("tableNumber").value);
-            const duration = parseInt(document.getElementById("duration").value) || DEFAULT_DURATION;
+    const startClock = () => {
+      setInterval(() => {
+        document.getElementById("clock").textContent =
+          "เวลา: " + new Date().toLocaleTimeString("th-TH", { hour12: false });
+      }, 1000);
+    };
 
-            if (isNaN(tableNumber) || tableNumber < 1) {
-                showNotification("หมายเลขโต๊ะต้องเป็นเลขที่มากกว่า 0!");
-                return;
-            }
+    const listenToDatabase = () => {
+      db.ref("tables").on("value", snapshot => {
+        renderTables(snapshot.val());
+      });
+    };
 
-            if (tables[tableNumber]) {
-                showNotification(`โต๊ะ ${tableNumber} มีลูกค้าอยู่แล้ว!`);
-                return;
-            }
-
-            if (usedTableNumbers.has(tableNumber)) {
-                showNotification(`โต๊ะ ${tableNumber} เคยใช้งานไปแล้ว ไม่สามารถใช้ซ้ำได้`);
-                return;
-            }
-
-            tables[tableNumber] = { remainingTime: duration };
-            usedTableNumbers.add(tableNumber);
-            saveToLocalStorage();
-            showNotification(`[${getThaiTime()}] ลูกค้าเข้าโต๊ะ ${tableNumber} จะออกใน ${duration} วินาที`);
-            updateTables();
-
-            const interval = setInterval(() => {
-                if (tables[tableNumber] && tables[tableNumber].remainingTime > 0) {
-                    tables[tableNumber].remainingTime--;
-                    updateTables();
-                    saveToLocalStorage();
-                } else if (tables[tableNumber]) {
-                    clearInterval(interval);
-                    removeTable(tableNumber);
-                }
-            }, 1000);
-        }
-
-        function removeTable(tableNumber) {
-            if (tables[tableNumber]) {
-                delete tables[tableNumber];
-                showNotification(`[${getThaiTime()}] โต๊ะ ${tableNumber} ว่างแล้ว`);
-                updateTables();
-                saveToLocalStorage();
-            }
-        }
-
-        function updateTables() {
-            const container = document.getElementById("tables");
-            container.innerHTML = "";
-            Object.keys(tables).forEach(tableNumber => {
-                const t = tables[tableNumber];
-                const div = document.createElement("div");
-                div.classList.add("table");
-                div.innerHTML = `
-                    <p>โต๊ะ ${tableNumber}</p>
-                    <p>เหลือเวลา: ${t.remainingTime} วินาที</p>
-                    <button class="remove-btn" onclick="removeTable(${tableNumber})">ออก</button>
-                `;
-                container.appendChild(div);
-            });
-            document.getElementById("availableTables").textContent = `จำนวนโต๊ะที่กำลังใช้งาน: ${Object.keys(tables).length}`;
-        }
-
-        function saveToLocalStorage() {
-            localStorage.setItem("tables", JSON.stringify(tables));
-            localStorage.setItem("usedTableNumbers", JSON.stringify([...usedTableNumbers]));
-        }
-
-        function loadFromLocalStorage() {
-            const saved = localStorage.getItem("tables");
-            const used = localStorage.getItem("usedTableNumbers");
-
-            if (saved) {
-                const restored = JSON.parse(saved);
-                Object.keys(restored).forEach(tableNumber => {
-                    tables[tableNumber] = restored[tableNumber];
-                    const interval = setInterval(() => {
-                        if (tables[tableNumber]) {
-                            if (tables[tableNumber].remainingTime > 0) {
-                                tables[tableNumber].remainingTime--;
-                                updateTables();
-                                saveToLocalStorage();
-                            } else {
-                                clearInterval(interval);
-                                removeTable(tableNumber);
-                            }
-                        }
-                    }, 1000);
-                });
-            }
-
-            if (used) {
-                JSON.parse(used).forEach(num => usedTableNumbers.add(num));
-            }
-
-            updateTables();
-        }
-
-        function resetUsedTableNumbersIfNeeded() {
-            const lastReset = localStorage.getItem("lastReset");
-            const now = Date.now();
-
-            if (!lastReset || now - parseInt(lastReset) > 24 * 60 * 60 * 1000) {
-                usedTableNumbers.clear();
-                localStorage.setItem("usedTableNumbers", JSON.stringify([]));
-                localStorage.setItem("lastReset", now.toString());
-                console.log("รีเซตหมายเลขโต๊ะที่เคยใช้งานแล้ว (ครบ 24 ชั่วโมง)");
-            }
-        }
-
-        window.onload = function () {
-            resetUsedTableNumbersIfNeeded();
-            loadFromLocalStorage();
-        };
-    </script>
+    window.onload = () => {
+      startClock();
+      listenToDatabase();
+    };
+  </script>
 </body>
 </html>
