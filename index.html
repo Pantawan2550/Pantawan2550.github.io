@@ -130,7 +130,8 @@
     const usedTableNumbers = new Set();
 
     setInterval(() => {
-      document.getElementById("clock").textContent = `เวลา: ${new Date().toLocaleTimeString("th-TH", { hour12: false })}`;
+      document.getElementById("clock").textContent =
+        `เวลา: ${new Date().toLocaleTimeString("th-TH", { hour12: false })}`;
     }, 1000);
 
     function showNotification(message) {
@@ -191,20 +192,22 @@
         return;
       }
 
-      const currentCount = Object.keys(tables).length;
-      if (currentCount > 0 && (currentCount % s === 0)) {
-        Object.keys(tables).forEach(tn => {
-          tables[tn].remainingTime = Math.ceil(tables[tn].remainingTime * 1.5);
-        });
-        showNotification(`ถึงจำนวนคิว ${(currentCount + 1)} → ทบเวลาโต๊ะทั้งหมดในระบบแล้ว`);
+      let adjustedTime = Math.ceil(waitTime);
+
+      const currentTables = Object.keys(tables).length;
+
+      // หากจำนวนโต๊ะที่ใช้งานอยู่ > จำนวนพนักงาน
+      if (currentTables >= s) {
+        let totalRemaining = 0;
+        Object.values(tables).forEach(t => totalRemaining += t.remainingTime);
+        adjustedTime += totalRemaining;
       }
 
-      const duration = Math.ceil(waitTime);
-      tables[tableNumber] = { remainingTime: duration };
+      tables[tableNumber] = { remainingTime: adjustedTime };
       usedTableNumbers.add(tableNumber);
-      showNotification(`โต๊ะ ${tableNumber} เพิ่มแล้ว (${formatTime(duration)})`);
-
+      showNotification(`โต๊ะ ${tableNumber} เพิ่มแล้ว (${formatTime(adjustedTime)})`);
       updateTables();
+
       const interval = setInterval(() => {
         if (tables[tableNumber]) {
           if (tables[tableNumber].remainingTime > 0) {
@@ -220,6 +223,7 @@
 
     function removeTable(tableNumber) {
       delete tables[tableNumber];
+      usedTableNumbers.delete(Number(tableNumber));
       showNotification(`โต๊ะ ${tableNumber} ว่างแล้ว`);
       updateTables();
     }
@@ -238,7 +242,8 @@
         `;
         container.appendChild(div);
       });
-      document.getElementById("availableTables").textContent = `จำนวนโต๊ะที่กำลังใช้งาน: ${Object.keys(tables).length}`;
+      document.getElementById("availableTables").textContent =
+        `จำนวนโต๊ะที่กำลังใช้งาน: ${Object.keys(tables).length}`;
     }
   </script>
 </body>
