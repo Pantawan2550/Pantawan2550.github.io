@@ -9,7 +9,7 @@
       font-family: Arial, sans-serif;
       text-align: center;
       background-color: #f4f4f4;
-      margin: 0;https://github.com/Pantawan2550/Pantawan2550.github.io/edit/main/index.html
+      margin: 0;
       padding: 20px;
     }
     .container {
@@ -140,11 +140,14 @@
       setTimeout(() => (note.style.display = "none"), 4000);
     }
 
+    function factorial(n) {
+      return n <= 1 ? 1 : n * factorial(n - 1);
+    }
+
     function calculateMMS(lambda, mu, s) {
       const ρ = lambda / (s * mu);
-      if (ρ >= 1) return null; // ไม่สามารถให้บริการได้เพียงพอ
+      if (ρ >= 1) return null;
 
-      // คำนวณ P0
       let sum = 0;
       for (let k = 0; k < s; k++) {
         sum += Math.pow(lambda / mu, k) / factorial(k);
@@ -154,11 +157,7 @@
 
       const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
       const Wq = Lq / lambda;
-      return Wq * 60; // แปลงเป็นวินาที
-    }
-
-    function factorial(n) {
-      return n <= 1 ? 1 : n * factorial(n - 1);
+      return Wq * 60;
     }
 
     function formatTime(seconds) {
@@ -192,7 +191,16 @@
         return;
       }
 
-      const duration = Math.ceil(waitTime);
+      // ✳️ ปรับเวลาถ้า active โต๊ะเป็นพหุคูณของ s
+      let adjustedWaitTime = waitTime;
+      const currentActive = Object.keys(tables).length;
+
+      if (currentActive > 0 && currentActive % s === 0) {
+        const factor = currentActive / s;
+        adjustedWaitTime *= (1 + 0.5 * factor); // เพิ่มเวลา 50% ต่อระดับคิว
+      }
+
+      const duration = Math.ceil(adjustedWaitTime);
       tables[tableNumber] = { remainingTime: duration };
       usedTableNumbers.add(tableNumber);
       showNotification(`โต๊ะ ${tableNumber} เพิ่มแล้ว (${formatTime(duration)})`);
