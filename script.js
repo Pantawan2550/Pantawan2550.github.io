@@ -67,9 +67,8 @@ function updateTables() {
             <button class="remove-btn" onclick="removeTable(${tableNumber})">ออก</button>
         `;
         tablesContainer.appendChild(tableDiv);
-    });
-}
-function factorial(n) {
+        
+    });function factorial(n) {
     return n <= 1 ? 1 : n * factorial(n - 1);
 }
 
@@ -115,3 +114,5 @@ function calculateQueue() {
         W (เวลาในระบบรวม): ${W.toFixed(4)} หน่วยเวลา
     `;
 }
+}
+
