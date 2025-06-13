@@ -264,3 +264,21 @@
     </script>
 </body>
 </html>
+<hr />
+<h2>คำนวณเวลารอลูกค้าด้วยระบบคิว (M/M/s)</h2>
+<div class="input-group">
+    <div class="input-item">
+        <label for="lambda">λ (อัตรามาถึง):</label>
+        <input type="number" id="lambda" step="any" placeholder="เช่น 2" />
+    </div>
+    <div class="input-item">
+        <label for="mu">μ (อัตราบริการ):</label>
+        <input type="number" id="mu" step="any" placeholder="เช่น 3" />
+    </div>
+    <div class="input-item">
+        <label for="servers">จำนวนเซิร์ฟเวอร์ (s):</label>
+        <input type="number" id="servers" placeholder="เช่น 2" />
+    </div>
+    <button onclick="calculateQueue()">คำนวณ</button>
+</div>
+<div class="notification" id="queueResult" style="display: none; text-align: left;"></div>
