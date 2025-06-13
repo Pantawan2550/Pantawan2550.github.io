@@ -1,110 +1,238 @@
-<script>
-  const tables = {};
-  const usedTableNumbers = new Set();
-
-  setInterval(() => {
-    document.getElementById("clock").textContent = `เวลา: ${new Date().toLocaleTimeString("th-TH", { hour12: false })}`;
-  }, 1000);
-
-  function showNotification(message) {
-    const note = document.getElementById("notification");
-    note.textContent = message;
-    note.style.display = "block";
-    setTimeout(() => (note.style.display = "none"), 4000);
-  }
-
-  function calculateMMS(lambda, mu, s) {
-    const ρ = lambda / (s * mu);
-    if (ρ >= 1) return null;
-
-    let sum = 0;
-    for (let k = 0; k < s; k++) {
-      sum += Math.pow(lambda / mu, k) / factorial(k);
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ระบบจัดการโต๊ะ + คำนวณคิว</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f4f4f4;
+      margin: 0;https://github.com/Pantawan2550/Pantawan2550.github.io/edit/main/index.html
+      padding: 20px;
     }
-    const lastTerm = Math.pow(lambda / mu, s) / (factorial(s) * (1 - ρ));
-    const P0 = 1 / (sum + lastTerm);
-
-    const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
-    const Wq = Lq / lambda; // หน่วยเป็น "นาที"
-    return Wq;
-  }
-
-  function factorial(n) {
-    return n <= 1 ? 1 : n * factorial(n - 1);
-  }
-
-  function formatTime(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins} นาที ${secs} วินาที`;
-  }
-
-  function addTable() {
-    const tableNumber = parseInt(document.getElementById("tableNumber").value);
-    const lambda = parseFloat(document.getElementById("lambda").value);
-    const mu = parseFloat(document.getElementById("mu").value);
-    const s = parseInt(document.getElementById("servers").value);
-
-    if (isNaN(tableNumber) || tableNumber < 1) {
-      showNotification("กรุณาใส่หมายเลขโต๊ะให้ถูกต้อง");
-      return;
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
-    if (usedTableNumbers.has(tableNumber) || tables[tableNumber]) {
-      showNotification(`โต๊ะ ${tableNumber} ถูกใช้งานหรือเคยใช้งานแล้ว`);
-      return;
+    .input-group, .queue-group {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 15px;
     }
-    if (isNaN(lambda) || isNaN(mu) || isNaN(s) || lambda <= 0 || mu <= 0 || s < 1) {
-      showNotification("กรุณาใส่ λ, μ และจำนวนพนักงานให้ถูกต้อง");
-      return;
+    .input-item {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 300px;
     }
-
-    const waitTime = calculateMMS(lambda, mu, s);
-    if (waitTime === null) {
-      showNotification("ระบบเกินความสามารถในการบริการ (λ ≥ sμ)");
-      return;
+    label {
+      white-space: nowrap;
     }
+    button {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .table-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .table {
+      border: 2px solid #333;
+      padding: 15px;
+      border-radius: 10px;
+      background-color: lightgreen;
+      width: 120px;
+      text-align: center;
+      font-weight: bold;
+      position: relative;
+    }
+    .remove-btn {
+      background-color: red;
+      color: white;
+      border: none;
+      padding: 5px;
+      border-radius: 5px;
+      cursor: pointer;
+      position: absolute;
+      bottom: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .notification {
+      margin-top: 15px;
+      padding: 10px;
+      background-color: #333;
+      color: white;
+      border-radius: 5px;
+      display: none;
+    }
+    .available-tables {
+      margin-top: 15px;
+      font-size: 18px;
+    }
+    #clock {
+      font-size: 20px;
+      margin-bottom: 10px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="clock"></div>
+    <h2>ระบบจัดการโต๊ะ</h2>
 
-    const durationInSeconds = Math.ceil(waitTime * 60);
-    tables[tableNumber] = { remainingTime: durationInSeconds };
-    usedTableNumbers.add(tableNumber);
+    <div class="queue-group">
+      <div class="input-item">
+        <label for="lambda">λ (ลูกค้ามาถึง/นาที):</label>
+        <input type="number" id="lambda" step="any" placeholder="เช่น 2" />
+      </div>
+      <div class="input-item">
+        <label for="mu">μ (บริการ/นาที):</label>
+        <input type="number" id="mu" step="any" placeholder="เช่น 3" />
+      </div>
+      <div class="input-item">
+        <label for="servers">จำนวนพนักงาน (s):</label>
+        <input type="number" id="servers" placeholder="เช่น 2" />
+      </div>
+    </div>
 
-    showNotification(`โต๊ะ ${tableNumber} เพิ่มแล้ว (${formatTime(durationInSeconds)})`);
+    <div class="input-group">
+      <div class="input-item">
+        <label for="tableNumber">หมายเลขโต๊ะ:</label>
+        <input type="number" id="tableNumber" min="1" />
+      </div>
+      <button onclick="addTable()">เพิ่มโต๊ะ</button>
+    </div>
 
-    updateTables();
+    <div class="notification" id="notification"></div>
+    <div class="table-container" id="tables"></div>
+    <div class="available-tables" id="availableTables"></div>
+  </div>
 
-    const interval = setInterval(() => {
-      if (tables[tableNumber]) {
-        if (tables[tableNumber].remainingTime > 0) {
-          tables[tableNumber].remainingTime--;
-          updateTables();
-        } else {
-          clearInterval(interval);
-          removeTable(tableNumber);
-        }
-      }
+  <script>
+    const tables = {};
+    const usedTableNumbers = new Set();
+
+    setInterval(() => {
+      document.getElementById("clock").textContent = `เวลา: ${new Date().toLocaleTimeString("th-TH", { hour12: false })}`;
     }, 1000);
-  }
 
-  function removeTable(tableNumber) {
-    delete tables[tableNumber];
-    showNotification(`โต๊ะ ${tableNumber} ว่างแล้ว`);
-    updateTables();
-  }
+    function showNotification(message) {
+      const note = document.getElementById("notification");
+      note.textContent = message;
+      note.style.display = "block";
+      setTimeout(() => (note.style.display = "none"), 4000);
+    }
 
-  function updateTables() {
-    const container = document.getElementById("tables");
-    container.innerHTML = "";
-    Object.keys(tables).forEach(tableNumber => {
-      const t = tables[tableNumber];
-      const div = document.createElement("div");
-      div.classList.add("table");
-      div.innerHTML = `
-        <p>โต๊ะ ${tableNumber}</p>
-        <p>เหลือเวลา: ${formatTime(t.remainingTime)}</p>
-        <button class="remove-btn" onclick="removeTable(${tableNumber})">ออก</button>
-      `;
-      container.appendChild(div);
-    });
-    document.getElementById("availableTables").textContent = `จำนวนโต๊ะที่กำลังใช้งาน: ${Object.keys(tables).length}`;
-  }
-</script>
+    function calculateMMS(lambda, mu, s) {
+      const ρ = lambda / (s * mu);
+      if (ρ >= 1) return null; // ไม่สามารถให้บริการได้เพียงพอ
+
+      // คำนวณ P0
+      let sum = 0;
+      for (let k = 0; k < s; k++) {
+        sum += Math.pow(lambda / mu, k) / factorial(k);
+      }
+      const lastTerm = Math.pow(lambda / mu, s) / (factorial(s) * (1 - ρ));
+      const P0 = 1 / (sum + lastTerm);
+
+      const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
+      const Wq = Lq / lambda;
+      return Wq * 60; // แปลงเป็นวินาที
+    }
+
+    function factorial(n) {
+      return n <= 1 ? 1 : n * factorial(n - 1);
+    }
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${m} นาที ${s} วินาที`;
+    }
+
+    function addTable() {
+      const tableNumber = parseInt(document.getElementById("tableNumber").value);
+      const lambda = parseFloat(document.getElementById("lambda").value);
+      const mu = parseFloat(document.getElementById("mu").value);
+      const s = parseInt(document.getElementById("servers").value);
+
+      if (isNaN(tableNumber) || tableNumber < 1) {
+        showNotification("กรุณาใส่หมายเลขโต๊ะให้ถูกต้อง");
+        return;
+      }
+      if (usedTableNumbers.has(tableNumber) || tables[tableNumber]) {
+        showNotification(`โต๊ะ ${tableNumber} ถูกใช้งานหรือเคยใช้งานแล้ว`);
+        return;
+      }
+      if (isNaN(lambda) || isNaN(mu) || isNaN(s) || lambda <= 0 || mu <= 0 || s < 1) {
+        showNotification("กรุณาใส่ λ, μ และจำนวนพนักงานให้ถูกต้อง");
+        return;
+      }
+
+      const waitTime = calculateMMS(lambda, mu, s);
+      if (waitTime === null) {
+        showNotification("ระบบเกินความสามารถในการบริการ (λ ≥ sμ)");
+        return;
+      }
+
+      const duration = Math.ceil(waitTime);
+      tables[tableNumber] = { remainingTime: duration };
+      usedTableNumbers.add(tableNumber);
+      showNotification(`โต๊ะ ${tableNumber} เพิ่มแล้ว (${formatTime(duration)})`);
+
+      updateTables();
+      const interval = setInterval(() => {
+        if (tables[tableNumber]) {
+          if (tables[tableNumber].remainingTime > 0) {
+            tables[tableNumber].remainingTime--;
+            updateTables();
+          } else {
+            clearInterval(interval);
+            removeTable(tableNumber);
+          }
+        }
+      }, 1000);
+    }
+
+    function removeTable(tableNumber) {
+      delete tables[tableNumber];
+      showNotification(`โต๊ะ ${tableNumber} ว่างแล้ว`);
+      updateTables();
+    }
+
+    function updateTables() {
+      const container = document.getElementById("tables");
+      container.innerHTML = "";
+      Object.keys(tables).forEach(tableNumber => {
+        const t = tables[tableNumber];
+        const div = document.createElement("div");
+        div.classList.add("table");
+        div.innerHTML = `
+          <p>โต๊ะ ${tableNumber}</p>
+          <p>เหลือเวลา: ${formatTime(t.remainingTime)}</p>
+          <button class="remove-btn" onclick="removeTable(${tableNumber})">ออก</button>
+        `;
+        container.appendChild(div);
+      });
+      document.getElementById("availableTables").textContent = `จำนวนโต๊ะที่กำลังใช้งาน: ${Object.keys(tables).length}`;
+    }
+  </script>
+</body>
+</html>
