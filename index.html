@@ -140,10 +140,6 @@
       setTimeout(() => (note.style.display = "none"), 4000);
     }
 
-    function factorial(n) {
-      return n <= 1 ? 1 : n * factorial(n - 1);
-    }
-
     function calculateMMS(lambda, mu, s) {
       const ρ = lambda / (s * mu);
       if (ρ >= 1) return null;
@@ -158,6 +154,10 @@
       const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
       const Wq = Lq / lambda;
       return Wq * 60;
+    }
+
+    function factorial(n) {
+      return n <= 1 ? 1 : n * factorial(n - 1);
     }
 
     function formatTime(seconds) {
@@ -191,16 +191,15 @@
         return;
       }
 
-      // ✳️ ปรับเวลาถ้า active โต๊ะเป็นพหุคูณของ s
-      let adjustedWaitTime = waitTime;
-      const currentActive = Object.keys(tables).length;
-
-      if (currentActive > 0 && currentActive % s === 0) {
-        const factor = currentActive / s;
-        adjustedWaitTime *= (1 + 0.5 * factor); // เพิ่มเวลา 50% ต่อระดับคิว
+      const currentCount = Object.keys(tables).length;
+      if (currentCount > 0 && (currentCount % s === 0)) {
+        Object.keys(tables).forEach(tn => {
+          tables[tn].remainingTime = Math.ceil(tables[tn].remainingTime * 1.5);
+        });
+        showNotification(`ถึงจำนวนคิว ${(currentCount + 1)} → ทบเวลาโต๊ะทั้งหมดในระบบแล้ว`);
       }
 
-      const duration = Math.ceil(adjustedWaitTime);
+      const duration = Math.ceil(waitTime);
       tables[tableNumber] = { remainingTime: duration };
       usedTableNumbers.add(tableNumber);
       showNotification(`โต๊ะ ${tableNumber} เพิ่มแล้ว (${formatTime(duration)})`);
