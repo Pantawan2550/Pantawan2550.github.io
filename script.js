@@ -69,3 +69,49 @@ function updateTables() {
         tablesContainer.appendChild(tableDiv);
     });
 }
+function factorial(n) {
+    return n <= 1 ? 1 : n * factorial(n - 1);
+}
+
+function calculateQueue() {
+    const lambda = parseFloat(document.getElementById("lambda").value);
+    const mu = parseFloat(document.getElementById("mu").value);
+    const s = parseInt(document.getElementById("servers").value);
+
+    const resultDiv = document.getElementById("queueResult");
+
+    if (isNaN(lambda) || isNaN(mu) || isNaN(s) || lambda <= 0 || mu <= 0 || s < 1) {
+        resultDiv.style.display = "block";
+        resultDiv.innerHTML = "กรุณากรอกค่า λ, μ และ s ให้ถูกต้อง!";
+        return;
+    }
+
+    const rho = lambda / (s * mu);
+    if (rho >= 1) {
+        resultDiv.style.display = "block";
+        resultDiv.innerHTML = "ระบบไม่เสถียร: λ ≥ sμ";
+        return;
+    }
+
+    // คำนวณ P0
+    let sum1 = 0;
+    for (let n = 0; n < s; n++) {
+        sum1 += Math.pow(lambda / mu, n) / factorial(n);
+    }
+    const sum2 = Math.pow(lambda / mu, s) / (factorial(s) * (1 - rho));
+    const P0 = 1 / (sum1 + sum2);
+
+    // คำนวณ Lq, Wq, W
+    const Lq = (Math.pow(lambda / mu, s) * rho * P0) / (factorial(s) * Math.pow(1 - rho, 2));
+    const Wq = Lq / lambda;
+    const W = Wq + 1 / mu;
+
+    resultDiv.style.display = "block";
+    resultDiv.innerHTML = `
+        <strong>ผลลัพธ์:</strong><br/>
+        P₀ (ระบบว่าง): ${P0.toFixed(4)}<br/>
+        Lq (ลูกค้าในคิวเฉลี่ย): ${Lq.toFixed(4)} คน<br/>
+        Wq (เวลารอเฉลี่ย): ${Wq.toFixed(4)} หน่วยเวลา<br/>
+        W (เวลาในระบบรวม): ${W.toFixed(4)} หน่วยเวลา
+    `;
+}
