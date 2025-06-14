@@ -165,7 +165,7 @@
     let queues = {};
     const usedQueueNumbers = new Set();
 
-    // เวลานาฬิกา
+    // แสดงเวลานาฬิกา
     setInterval(() => {
       document.getElementById("clock").textContent =
         `เวลา: ${new Date().toLocaleTimeString("th-TH", { hour12: false })}`;
@@ -182,6 +182,7 @@
       return n <= 1 ? 1 : n * factorial(n - 1);
     }
 
+    // คำนวณเวลารอคิวแบบ M/M/s (หน่วยวินาที)
     function calculateMMS(lambda, mu, s) {
       const ρ = lambda / (s * mu);
       if (ρ >= 1) return null;
@@ -228,25 +229,58 @@
       }
 
       let adjustedTime = Math.ceil(waitTime);
-      const currentQueue = Object.values(queues).map(t => t.remainingTime);
-      const index = currentQueue.length;
 
-      if (index >= s) {
-        if (index % s === 0) {
-          const sum = currentQueue.slice(index - s, index).reduce((a, b) => a + b, 0);
-          adjustedTime += sum;
-        } else {
-          adjustedTime += currentQueue[index - 1];
-        }
+      // เรียงคิวตามหมายเลขคิวเพื่อให้เวลาทบถูกต้อง
+      const queueNumbersSorted = Object.keys(queues).map(Number).sort((a, b) => a - b);
+      const times = queueNumbersSorted.map(qNum => queues[qNum].remainingTime);
+
+      if (times.length < s) {
+        // ถ้าน้อยกว่าจำนวนพนักงาน ไม่ต้องทบเวลา
+        queues[queueNumber] = { remainingTime: adjustedTime };
+      } else {
+        // จำนวนคิวมากกว่าหรือเท่ากับ s
+        // หาคิวเวลาน้อยที่สุดที่ index = length - s
+        const baseIndex = times.length - s;
+        const baseTime = times[baseIndex];
+
+        // เวลาคิวก่อนหน้า (ถ้ามี)
+        const prevTime = times.length > 0 ? times[times.length - 1] : 0;
+
+        // เวลาคิวใหม่ = เวลาคิวก่อนหน้า + เวลาใหม่
+        const newQueueTime = prevTime + adjustedTime;
+
+        // เตรียม array เวลาทบต่อเนื่อง
+        let allTimes = [...times];
+
+        // เพิ่มเวลาคิวใหม่
+        allTimes.push(newQueueTime);
+
+        // อัปเดตเวลาคิวทั้งหมดใน queues
+        let newQueues = {};
+
+        queueNumbersSorted.forEach((qNum, idx) => {
+          if (idx < baseIndex) {
+            // คิวก่อน baseIndex ไม่เปลี่ยนเวลา
+            newQueues[qNum] = { remainingTime: queues[qNum].remainingTime };
+          } else {
+            // คิวที่ index >= baseIndex ทบเวลาตาม allTimes
+            newQueues[qNum] = { remainingTime: allTimes[idx] };
+          }
+        });
+
+        // เพิ่มคิวใหม่
+        newQueues[queueNumber] = { remainingTime: allTimes[allTimes.length - 1] };
+
+        queues = newQueues;
       }
 
-      queues[queueNumber] = { remainingTime: adjustedTime };
       usedQueueNumbers.add(queueNumber);
       updateQueues();
-      showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(adjustedTime)})`);
+      showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(queues[queueNumber].remainingTime)})`);
 
       db.ref("queues").set(queues);
 
+      // ตั้ง interval ลดเวลาคิวเรียลไทม์
       const interval = setInterval(() => {
         if (queues[queueNumber]) {
           if (queues[queueNumber].remainingTime > 0) {
@@ -257,6 +291,8 @@
             clearInterval(interval);
             removeQueue(queueNumber);
           }
+        } else {
+          clearInterval(interval);
         }
       }, 1000);
     }
@@ -287,9 +323,10 @@
         `จำนวนคิวที่กำลังให้บริการ: ${Object.keys(queues).length}`;
     }
 
-    // เรียกใช้งาน Firebase เมื่อโหลดหน้า
+    // โหลดข้อมูลคิวจาก Firebase ทันทีที่โหลดหน้า
     db.ref("queues").on("value", snapshot => {
       queues = snapshot.val() || {};
+      usedQueueNumbers.clear();
       Object.keys(queues).forEach(q => usedQueueNumbers.add(Number(q)));
       updateQueues();
     });
