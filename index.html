@@ -12,16 +12,14 @@
       margin: 0;
       padding: 20px;
     }
-
     .container {
-      max-width: 600px;
+      max-width: 700px;
       margin: auto;
       background: white;
       padding: 20px;
       border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-
     .input-group, .queue-group {
       display: flex;
       flex-wrap: wrap;
@@ -29,18 +27,15 @@
       gap: 10px;
       margin-bottom: 15px;
     }
-
     .input-item {
       display: flex;
       justify-content: space-between;
       width: 100%;
       max-width: 300px;
     }
-
     label {
       white-space: nowrap;
     }
-
     button {
       background-color: #28a745;
       color: white;
@@ -49,30 +44,19 @@
       border-radius: 5px;
       cursor: pointer;
     }
-
     button:hover {
       background-color: #218838;
     }
-
-    .queue-container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 20px;
-    }
-
     .queue-box {
       border: 2px solid #333;
       padding: 15px;
       border-radius: 10px;
       background-color: #d4edda;
       width: 120px;
-      text-align: center;
+      margin: 10px;
       font-weight: bold;
       position: relative;
     }
-
     .remove-btn {
       background-color: #dc3545;
       color: white;
@@ -85,11 +69,9 @@
       left: 50%;
       transform: translateX(-50%);
     }
-
     .remove-btn:hover {
       background-color: #c82333;
     }
-
     .notification {
       margin-top: 15px;
       padding: 10px;
@@ -98,56 +80,68 @@
       border-radius: 5px;
       display: none;
     }
-
     .current-queue-count {
       margin-top: 15px;
       font-size: 18px;
     }
-
     #clock {
       font-size: 20px;
       margin-bottom: 10px;
       color: #555;
+    }
+    .toggle-btn {
+      background-color: #007bff;
+      margin-top: 10px;
+    }
+    .toggle-btn:hover {
+      background-color: #0069d9;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div id="clock"></div>
-    <h2>ระบบจัดการคิวแบบเรียลไทม์</h2>
+    <h2 id="mode-title">ระบบจัดการคิว (พ่อค้าแม่ค้า)</h2>
+    <button class="toggle-btn" onclick="toggleMode()">สลับมุมมอง</button>
 
-    <div class="queue-group">
-      <div class="input-item">
-        <label for="lambda">λ (ลูกค้ามาถึง/นาที):</label>
-        <input type="number" id="lambda" step="any" placeholder="เช่น 2" />
+    <div id="merchant-view">
+      <div class="queue-group">
+        <div class="input-item">
+          <label for="lambda">λ (ลูกค้ามาถึง/นาที):</label>
+          <input type="number" id="lambda" step="any" placeholder="เช่น 2" />
+        </div>
+        <div class="input-item">
+          <label for="mu">μ (บริการ/นาที):</label>
+          <input type="number" id="mu" step="any" placeholder="เช่น 3" />
+        </div>
+        <div class="input-item">
+          <label for="servers">จำนวนพนักงาน (s):</label>
+          <input type="number" id="servers" placeholder="เช่น 2" />
+        </div>
       </div>
-      <div class="input-item">
-        <label for="mu">μ (บริการ/นาที):</label>
-        <input type="number" id="mu" step="any" placeholder="เช่น 3" />
+
+      <div class="input-group">
+        <div class="input-item">
+          <label for="queueNumber">หมายเลขคิว:</label>
+          <input type="number" id="queueNumber" min="1" />
+        </div>
+        <button onclick="addQueue()">เพิ่มคิว</button>
       </div>
-      <div class="input-item">
-        <label for="servers">จำนวนพนักงาน (s):</label>
-        <input type="number" id="servers" placeholder="เช่น 2" />
-      </div>
+
+      <div class="notification" id="notification"></div>
+      <div class="queue-container" id="queues"></div>
+      <div class="current-queue-count" id="queueCount"></div>
     </div>
 
-    <div class="input-group">
-      <div class="input-item">
-        <label for="queueNumber">หมายเลขคิว:</label>
-        <input type="number" id="queueNumber" min="1" />
-      </div>
-      <button onclick="addQueue()">เพิ่มคิว</button>
+    <div id="customer-view" style="display: none;">
+      <h3>รายการคิวที่กำลังให้บริการ</h3>
+      <div id="customer-queues"></div>
     </div>
-
-    <div class="notification" id="notification"></div>
-    <div class="queue-container" id="queues"></div>
-    <div class="current-queue-count" id="queueCount"></div>
   </div>
 
-  <!-- Firebase SDK -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDNkrcksSvU6H4xYf9h5hvWYgHFYuy4igw",
@@ -165,24 +159,33 @@
     let queues = {};
     const usedQueueNumbers = new Set();
 
-    // แสดงเวลานาฬิกา
-    setInterval(() => {
-      document.getElementById("clock").textContent =
-        `เวลา: ${new Date().toLocaleTimeString("th-TH", { hour12: false })}`;
-    }, 1000);
+    function toggleMode() {
+      const merchant = document.getElementById("merchant-view");
+      const customer = document.getElementById("customer-view");
+      const title = document.getElementById("mode-title");
+
+      if (merchant.style.display === "none") {
+        merchant.style.display = "block";
+        customer.style.display = "none";
+        title.textContent = "ระบบจัดการคิว (พ่อค้าแม่ค้า)";
+      } else {
+        merchant.style.display = "none";
+        customer.style.display = "block";
+        title.textContent = "หน้าลูกค้า - คิวเรียลไทม์";
+      }
+    }
 
     function showNotification(message) {
       const note = document.getElementById("notification");
       note.textContent = message;
       note.style.display = "block";
-      setTimeout(() => (note.style.display = "none"), 4000);
+      setTimeout(() => note.style.display = "none", 4000);
     }
 
     function factorial(n) {
       return n <= 1 ? 1 : n * factorial(n - 1);
     }
 
-    // คำนวณเวลารอคิวแบบ M/M/s (หน่วยวินาที)
     function calculateMMS(lambda, mu, s) {
       const ρ = lambda / (s * mu);
       if (ρ >= 1) return null;
@@ -193,8 +196,7 @@
       const lastTerm = Math.pow(lambda / mu, s) / (factorial(s) * (1 - ρ));
       const P0 = 1 / (sum + lastTerm);
       const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
-      const Wq = Lq / lambda;
-      return Wq * 60;
+      return (Lq / lambda) * 60; // วินาที
     }
 
     function formatTime(seconds) {
@@ -209,61 +211,49 @@
       const mu = parseFloat(document.getElementById("mu").value);
       const s = parseInt(document.getElementById("servers").value);
 
-      if (isNaN(queueNumber) || queueNumber < 1) {
-        showNotification("กรุณาใส่หมายเลขคิวให้ถูกต้อง");
+      if (isNaN(queueNumber) || queueNumber < 1 || usedQueueNumbers.has(queueNumber) || queues[queueNumber]) {
+        showNotification("หมายเลขคิวไม่ถูกต้องหรือถูกใช้งานแล้ว");
         return;
       }
-      if (usedQueueNumbers.has(queueNumber) || queues[queueNumber]) {
-        showNotification(`คิว ${queueNumber} ถูกใช้งานหรือเคยใช้งานแล้ว`);
-        return;
-      }
+
       if (isNaN(lambda) || isNaN(mu) || isNaN(s) || lambda <= 0 || mu <= 0 || s < 1) {
-        showNotification("กรุณาใส่ λ, μ และจำนวนพนักงานให้ถูกต้อง");
+        showNotification("กรุณากรอก λ, μ และจำนวนพนักงานให้ถูกต้อง");
         return;
       }
 
       const waitTime = calculateMMS(lambda, mu, s);
       if (waitTime === null) {
-        showNotification("ระบบเกินความสามารถในการบริการ (λ ≥ sμ)");
+        showNotification("λ มากเกินกว่าที่ระบบรับได้");
         return;
       }
 
-      const baseWaitTime = Math.ceil(waitTime);
+      const baseWait = Math.ceil(waitTime);
+      const sorted = Object.keys(queues).map(Number).sort((a, b) => a - b);
+      sorted.push(queueNumber);
+      const newQueues = {};
 
-      // รวมหมายเลขคิวเดิมและคิวใหม่แล้วจัดเรียง
-      const queueNumbersSorted = Object.keys(queues).map(Number).sort((a, b) => a - b);
-      queueNumbersSorted.push(queueNumber);
-
-      let newQueues = {};
-
-      for (let i = 0; i < queueNumbersSorted.length; i++) {
-        const qNum = queueNumbersSorted[i];
+      for (let i = 0; i < sorted.length; i++) {
+        const q = sorted[i];
         if (i < s) {
-          // คิวแรก s ตัวใช้ baseWaitTime ตรงๆ
-          newQueues[qNum] = { remainingTime: baseWaitTime };
+          newQueues[q] = { remainingTime: baseWait };
         } else {
-          // คิวที่เกิน s ตัวเวลาทบจากคิวก่อนหน้า offset ด้วย s
-          const prevIndex = i - s;
-          const prevQueueNumber = queueNumbersSorted[prevIndex];
-          const prevTime = newQueues[prevQueueNumber].remainingTime;
-          newQueues[qNum] = { remainingTime: prevTime + baseWaitTime };
+          const prev = newQueues[sorted[i - s]].remainingTime;
+          newQueues[q] = { remainingTime: prev + baseWait };
         }
       }
 
       queues = newQueues;
       usedQueueNumbers.add(queueNumber);
-      updateQueues();
+      db.ref("queues").set(queues);
+      updateMerchantView();
       showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(queues[queueNumber].remainingTime)})`);
 
-      db.ref("queues").set(queues);
-
-      // ตั้ง interval ลดเวลาคิวเรียลไทม์
       const interval = setInterval(() => {
         if (queues[queueNumber]) {
           if (queues[queueNumber].remainingTime > 0) {
             queues[queueNumber].remainingTime--;
-            updateQueues();
             db.ref("queues").set(queues);
+            updateMerchantView();
           } else {
             clearInterval(interval);
             removeQueue(queueNumber);
@@ -274,39 +264,54 @@
       }, 1000);
     }
 
-    function removeQueue(queueNumber) {
-      delete queues[queueNumber];
-      usedQueueNumbers.delete(Number(queueNumber));
-      updateQueues();
+    function removeQueue(qNum) {
+      delete queues[qNum];
+      usedQueueNumbers.delete(Number(qNum));
       db.ref("queues").set(queues);
-      showNotification(`คิว ${queueNumber} เสร็จสิ้น`);
+      updateMerchantView();
     }
 
-    function updateQueues() {
+    function updateMerchantView() {
       const container = document.getElementById("queues");
       container.innerHTML = "";
-      Object.keys(queues).forEach(queueNumber => {
-        const t = queues[queueNumber];
-        const div = document.createElement("div");
-        div.classList.add("queue-box");
-        div.innerHTML = `
-          <p>คิว ${queueNumber}</p>
-          <p>เหลือเวลา: ${formatTime(t.remainingTime)}</p>
-          <button class="remove-btn" onclick="removeQueue(${queueNumber})">เสร็จ</button>
+      Object.entries(queues).forEach(([num, data]) => {
+        const box = document.createElement("div");
+        box.className = "queue-box";
+        box.innerHTML = `
+          <p>คิว ${num}</p>
+          <p>เหลือเวลา: ${formatTime(data.remainingTime)}</p>
+          <button class="remove-btn" onclick="removeQueue(${num})">เสร็จ</button>
         `;
-        container.appendChild(div);
+        container.appendChild(box);
       });
-      document.getElementById("queueCount").textContent =
-        `จำนวนคิวที่กำลังให้บริการ: ${Object.keys(queues).length}`;
+      document.getElementById("queueCount").textContent = `จำนวนคิวที่กำลังให้บริการ: ${Object.keys(queues).length}`;
     }
 
-    // โหลดข้อมูลคิวจาก Firebase ทันทีที่โหลดหน้า
+    function updateCustomerView() {
+      const container = document.getElementById("customer-queues");
+      container.innerHTML = "";
+      Object.entries(queues).forEach(([num, data]) => {
+        const box = document.createElement("div");
+        box.className = "queue-box";
+        box.innerHTML = `
+          <p>คิว ${num}</p>
+          <p>เหลือเวลา: ${formatTime(data.remainingTime)}</p>
+        `;
+        container.appendChild(box);
+      });
+    }
+
     db.ref("queues").on("value", snapshot => {
       queues = snapshot.val() || {};
       usedQueueNumbers.clear();
       Object.keys(queues).forEach(q => usedQueueNumbers.add(Number(q)));
-      updateQueues();
+      updateMerchantView();
+      updateCustomerView();
     });
+
+    setInterval(() => {
+      document.getElementById("clock").textContent = `เวลา: ${new Date().toLocaleTimeString("th-TH", { hour12: false })}`;
+    }, 1000);
   </script>
 </body>
 </html>
