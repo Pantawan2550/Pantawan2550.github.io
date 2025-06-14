@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ระบบจัดการคิวแบบเรียลไทม์</title>
+  <title>ระบบจัดการคิวแบบเรียลไทม์ (พ่อค้าแม่ค้า)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -33,9 +33,7 @@
       width: 100%;
       max-width: 300px;
     }
-    label {
-      white-space: nowrap;
-    }
+    label { white-space: nowrap; }
     button {
       background-color: #28a745;
       color: white;
@@ -44,9 +42,7 @@
       border-radius: 5px;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #218838;
-    }
+    button:hover { background-color: #218838; }
     .queue-container {
       display: flex;
       flex-wrap: wrap;
@@ -76,9 +72,7 @@
       left: 50%;
       transform: translateX(-50%);
     }
-    .remove-btn:hover {
-      background-color: #c82333;
-    }
+    .remove-btn:hover { background-color: #c82333; }
     .notification {
       margin-top: 15px;
       padding: 10px;
@@ -100,8 +94,8 @@
 </head>
 <body>
   <div class="container">
+    <h2>ระบบจัดการคิว (พ่อค้าแม่ค้า)</h2>
     <div id="clock"></div>
-    <h2>ระบบจัดการคิวแบบเรียลไทม์</h2>
 
     <div class="queue-group">
       <div class="input-item">
@@ -131,10 +125,8 @@
     <div class="current-queue-count" id="queueCount"></div>
   </div>
 
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDNkrcksSvU6H4xYf9h5hvWYgHFYuy4igw",
@@ -143,12 +135,12 @@
       projectId: "queue-management-system-79b27",
       storageBucket: "queue-management-system-79b27.appspot.com",
       messagingSenderId: "76344006886",
-      appId: "1:76344006886:web:a93cdee9adf70b43e30327"
+      appId: "1:76344006886:web:a93cdee9adf70b43e30327",
+      measurementId: "G-F1R4Q52535"
     };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-
     let queues = {};
     const usedQueueNumbers = new Set();
 
@@ -179,7 +171,7 @@
       const P0 = 1 / (sum + lastTerm);
       const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
       const Wq = Lq / lambda;
-      return Wq * 60;
+      return Wq * 60; // seconds
     }
 
     function formatTime(seconds) {
@@ -188,64 +180,76 @@
       return `${m} นาที ${s} วินาที`;
     }
 
+    function calculateWaitTimes(queueNumbers, baseWaitTime, s) {
+      let waitTimes = {};
+      const sortedQueues = [...queueNumbers].sort((a, b) => a - b);
+
+      for (let i = 0; i < sortedQueues.length; i++) {
+        const q = sortedQueues[i];
+        const pos = i + 1;
+
+        if (pos <= s) {
+          waitTimes[q] = baseWaitTime;
+        } else {
+          const indexInCycle = (pos - 1) % s;
+          if (indexInCycle === 0) {
+            const minTime = Math.min(...Object.values(waitTimes));
+            waitTimes[q] = minTime + baseWaitTime;
+          } else {
+            const indexOfStart = i - indexInCycle;
+            const startQueue = sortedQueues[indexOfStart];
+            waitTimes[q] = waitTimes[startQueue];
+          }
+        }
+      }
+      return waitTimes;
+    }
+
     function addQueue() {
       const queueNumber = parseInt(document.getElementById("queueNumber").value);
       const lambda = parseFloat(document.getElementById("lambda").value);
       const mu = parseFloat(document.getElementById("mu").value);
       const s = parseInt(document.getElementById("servers").value);
 
-      if (isNaN(queueNumber) || queueNumber < 1) {
-        showNotification("กรุณาใส่หมายเลขคิวให้ถูกต้อง");
-        return;
-      }
-      if (usedQueueNumbers.has(queueNumber) || queues[queueNumber]) {
-        showNotification(`คิว ${queueNumber} ถูกใช้งานหรือเคยใช้งานแล้ว`);
+      if (isNaN(queueNumber) || queueNumber < 1 || usedQueueNumbers.has(queueNumber)) {
+        showNotification("หมายเลขคิวซ้ำหรือไม่ถูกต้อง");
         return;
       }
       if (isNaN(lambda) || isNaN(mu) || isNaN(s) || lambda <= 0 || mu <= 0 || s < 1) {
-        showNotification("กรุณาใส่ λ, μ และจำนวนพนักงานให้ถูกต้อง");
+        showNotification("โปรดกรอกค่าถูกต้องทั้งหมด");
         return;
       }
 
-      const waitTime = calculateMMS(lambda, mu, s);
-      if (waitTime === null) {
-        showNotification("ระบบเกินความสามารถในการบริการ (λ ≥ sμ)");
+      const baseWaitTime = calculateMMS(lambda, mu, s);
+      if (baseWaitTime === null) {
+        showNotification("ระบบเกินความสามารถ (λ ≥ sμ)");
         return;
       }
 
-      let adjustedTime = Math.ceil(waitTime);
-      const currentQueue = Object.values(queues).map(t => t.remainingTime);
-      const index = currentQueue.length;
+      const allQueueNumbers = [...Object.keys(queues).map(Number), queueNumber];
+      const newWaitTimes = calculateWaitTimes(allQueueNumbers, Math.ceil(baseWaitTime), s);
 
-      if (index >= s) {
-        const mod = index % s;
-        if (mod === 0) {
-          const sum = currentQueue.slice(index - s, index).reduce((a, b) => a + b, 0);
-          adjustedTime += sum;
-        } else if (mod === 1) {
-          const minTime = Math.min(...currentQueue);
-          adjustedTime += minTime;
-        } else {
-          adjustedTime += currentQueue[index - 1];
-        }
+      queues = {};
+      usedQueueNumbers.clear();
+      for (const qNum of allQueueNumbers) {
+        queues[qNum] = { remainingTime: newWaitTimes[qNum] };
+        usedQueueNumbers.add(qNum);
       }
 
-      queues[queueNumber] = { remainingTime: adjustedTime };
-      usedQueueNumbers.add(queueNumber);
-      updateQueues();
-      showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(adjustedTime)})`);
       db.ref("queues").set(queues);
+      showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(queues[queueNumber].remainingTime)})`);
 
       const interval = setInterval(() => {
         if (queues[queueNumber]) {
           if (queues[queueNumber].remainingTime > 0) {
             queues[queueNumber].remainingTime--;
-            updateQueues();
             db.ref("queues").set(queues);
           } else {
             clearInterval(interval);
             removeQueue(queueNumber);
           }
+        } else {
+          clearInterval(interval);
         }
       }, 1000);
     }
@@ -253,7 +257,6 @@
     function removeQueue(queueNumber) {
       delete queues[queueNumber];
       usedQueueNumbers.delete(Number(queueNumber));
-      updateQueues();
       db.ref("queues").set(queues);
       showNotification(`คิว ${queueNumber} เสร็จสิ้น`);
     }
@@ -261,7 +264,9 @@
     function updateQueues() {
       const container = document.getElementById("queues");
       container.innerHTML = "";
-      Object.keys(queues).forEach(queueNumber => {
+      Object.keys(queues)
+        .sort((a, b) => Number(a) - Number(b))
+        .forEach(queueNumber => {
         const t = queues[queueNumber];
         const div = document.createElement("div");
         div.classList.add("queue-box");
@@ -278,6 +283,7 @@
 
     db.ref("queues").on("value", snapshot => {
       queues = snapshot.val() || {};
+      usedQueueNumbers.clear();
       Object.keys(queues).forEach(q => usedQueueNumbers.add(Number(q)));
       updateQueues();
     });
