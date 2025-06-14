@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>สถานะโต๊ะ</title>
+  <title>สถานะคิว</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -31,14 +31,14 @@
       border-radius: 5px;
       text-decoration: none;
     }
-    .table-container {
+    .queue-container {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 10px;
       margin-top: 20px;
     }
-    .table {
+    .queue {
       border: 2px solid #333;
       padding: 15px;
       border-radius: 10px;
@@ -47,7 +47,7 @@
       text-align: center;
       font-weight: bold;
     }
-    .available-tables {
+    .available-queues {
       margin-top: 20px;
       font-size: 18px;
     }
@@ -60,15 +60,15 @@
 </head>
 <body>
   <div class="container">
-    <a class="nav-link" href="index.html">กลับไปจัดการโต๊ะ</a>
+    <a class="nav-link" href="index.html">กลับไปจัดการคิว</a>
     <div id="clock"></div>
-    <h1>สถานะโต๊ะที่กำลังใช้งาน</h1>
-    <div class="table-container" id="tables"></div>
-    <div class="available-tables" id="availableTables"></div>
+    <h1>สถานะคิวที่กำลังให้บริการ</h1>
+    <div class="queue-container" id="queues"></div>
+    <div class="available-queues" id="availableQueues"></div>
   </div>
 
   <script>
-    const tables = {};
+    const queues = {};
 
     setInterval(() => {
       document.getElementById("clock").textContent = `เวลา: ${getThaiTime()}`;
@@ -78,29 +78,30 @@
       return new Date().toLocaleTimeString("th-TH", { hour12: false });
     }
 
-    function updateTables() {
-      const container = document.getElementById("tables");
+    function updateQueues() {
+      const container = document.getElementById("queues");
       container.innerHTML = "";
-      Object.keys(tables).forEach(tableNumber => {
-        const t = tables[tableNumber];
+      Object.keys(queues).forEach(queueNumber => {
+        const q = queues[queueNumber];
         const div = document.createElement("div");
-        div.classList.add("table");
+        div.classList.add("queue");
         div.innerHTML = `
-          <p>โต๊ะ ${tableNumber}</p>
-          <p>เหลือเวลา: ${t.remainingTime} วินาที</p>
+          <p>คิวที่ ${queueNumber}</p>
+          <p>เหลือเวลา: ${q.remainingTime} วินาที</p>
         `;
         container.appendChild(div);
       });
 
-      document.getElementById("availableTables").textContent = `จำนวนโต๊ะที่กำลังใช้งาน: ${Object.keys(tables).length}`;
+      document.getElementById("availableQueues").textContent = 
+        `จำนวนคิวที่กำลังให้บริการ: ${Object.keys(queues).length}`;
     }
 
     function loadFromLocalStorage() {
-      const saved = localStorage.getItem("tables");
+      const saved = localStorage.getItem("queues");
       if (saved) {
-        Object.assign(tables, JSON.parse(saved));
+        Object.assign(queues, JSON.parse(saved));
       }
-      updateTables();
+      updateQueues();
     }
 
     window.onload = loadFromLocalStorage;
