@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ระบบจัดการคิว</title>
+  <title>ระบบจัดการคิว (Realtime)</title>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,7 +17,6 @@
       margin: 0;
       padding: 20px;
     }
-
     .container {
       max-width: 600px;
       margin: auto;
@@ -21,7 +25,6 @@
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
-
     .input-group, .queue-group {
       display: flex;
       flex-wrap: wrap;
@@ -29,31 +32,22 @@
       gap: 10px;
       margin-bottom: 15px;
     }
-
     .input-item {
       display: flex;
       justify-content: space-between;
       width: 100%;
       max-width: 300px;
     }
-
-    label {
-      white-space: nowrap;
-    }
-
+    label { white-space: nowrap; }
     button {
-      background-color: #28a745; /* เขียว */
+      background-color: #28a745;
       color: white;
       border: none;
       padding: 10px 15px;
       border-radius: 5px;
       cursor: pointer;
     }
-
-    button:hover {
-      background-color: #218838; /* เขียวเข้มเมื่อ hover */
-    }
-
+    button:hover { background-color: #218838; }
     .queue-container {
       display: flex;
       flex-wrap: wrap;
@@ -61,18 +55,16 @@
       gap: 10px;
       margin-top: 20px;
     }
-
     .queue-box {
       border: 2px solid #333;
       padding: 15px;
       border-radius: 10px;
-      background-color: #d4edda; /* เขียวอ่อน */
+      background-color: #d4edda;
       width: 120px;
       text-align: center;
       font-weight: bold;
       position: relative;
     }
-
     .remove-btn {
       background-color: #dc3545;
       color: white;
@@ -85,11 +77,7 @@
       left: 50%;
       transform: translateX(-50%);
     }
-
-    .remove-btn:hover {
-      background-color: #c82333;
-    }
-
+    .remove-btn:hover { background-color: #c82333; }
     .notification {
       margin-top: 15px;
       padding: 10px;
@@ -98,12 +86,10 @@
       border-radius: 5px;
       display: none;
     }
-
     .current-queue-count {
       margin-top: 15px;
       font-size: 18px;
     }
-
     #clock {
       font-size: 20px;
       margin-bottom: 10px;
@@ -114,7 +100,7 @@
 <body>
   <div class="container">
     <div id="clock"></div>
-    <h2>ระบบจัดการคิว</h2>
+    <h2>ระบบจัดการคิว (Realtime)</h2>
 
     <div class="queue-group">
       <div class="input-item">
@@ -145,6 +131,19 @@
   </div>
 
   <script>
+    // 🔧 ตั้งค่า Firebase (เปลี่ยนค่าตามโปรเจกต์ของคุณ)
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
     const queues = {};
     const usedQueueNumbers = new Set();
 
@@ -163,14 +162,12 @@
     function calculateMMS(lambda, mu, s) {
       const ρ = lambda / (s * mu);
       if (ρ >= 1) return null;
-
       let sum = 0;
       for (let k = 0; k < s; k++) {
         sum += Math.pow(lambda / mu, k) / factorial(k);
       }
       const lastTerm = Math.pow(lambda / mu, s) / (factorial(s) * (1 - ρ));
       const P0 = 1 / (sum + lastTerm);
-
       const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
       const Wq = Lq / lambda;
       return Wq * 60;
@@ -224,29 +221,16 @@
         }
       }
 
-      queues[queueNumber] = { remainingTime: adjustedTime };
-      usedQueueNumbers.add(queueNumber);
-      showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(adjustedTime)})`);
-      updateQueues();
+      firebase.database().ref('queues/' + queueNumber).set({
+        remainingTime: adjustedTime,
+        timestamp: Date.now()
+      });
 
-      const interval = setInterval(() => {
-        if (queues[queueNumber]) {
-          if (queues[queueNumber].remainingTime > 0) {
-            queues[queueNumber].remainingTime--;
-            updateQueues();
-          } else {
-            clearInterval(interval);
-            removeQueue(queueNumber);
-          }
-        }
-      }, 1000);
+      document.getElementById("queueNumber").value = "";
     }
 
     function removeQueue(queueNumber) {
-      delete queues[queueNumber];
-      usedQueueNumbers.delete(Number(queueNumber));
-      showNotification(`คิว ${queueNumber} เสร็จสิ้น`);
-      updateQueues();
+      firebase.database().ref('queues/' + queueNumber).remove();
     }
 
     function updateQueues() {
@@ -266,6 +250,27 @@
       document.getElementById("queueCount").textContent =
         `จำนวนคิวที่กำลังให้บริการ: ${Object.keys(queues).length}`;
     }
+
+    // ⏱️ ตัวนับเวลาถอยหลัง และซิงก์ Firebase ทุกวินาที
+    setInterval(() => {
+      Object.keys(queues).forEach(queueNumber => {
+        if (queues[queueNumber].remainingTime > 0) {
+          queues[queueNumber].remainingTime--;
+          firebase.database().ref('queues/' + queueNumber + '/remainingTime').set(queues[queueNumber].remainingTime);
+        }
+      });
+      updateQueues();
+    }, 1000);
+
+    // 📡 sync data จาก Firebase ทันทีเมื่อเปลี่ยน
+    firebase.database().ref('queues').on('value', snapshot => {
+      const data = snapshot.val() || {};
+      Object.keys(data).forEach(key => {
+        queues[key] = { remainingTime: data[key].remainingTime };
+        usedQueueNumbers.add(Number(key));
+      });
+      updateQueues();
+    });
   </script>
 </body>
 </html>
