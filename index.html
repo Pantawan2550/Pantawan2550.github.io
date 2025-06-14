@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ระบบจัดการโต๊ะ + คำนวณคิว</title>
+  <title>ระบบจัดการคิว</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -37,25 +37,25 @@
       white-space: nowrap;
     }
     button {
-      background-color: #28a745;
+      background-color: #007bff;
       color: white;
       border: none;
       padding: 10px 15px;
       border-radius: 5px;
       cursor: pointer;
     }
-    .table-container {
+    .queue-container {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 10px;
       margin-top: 20px;
     }
-    .table {
+    .queue-box {
       border: 2px solid #333;
       padding: 15px;
       border-radius: 10px;
-      background-color: lightgreen;
+      background-color: lightblue;
       width: 120px;
       text-align: center;
       font-weight: bold;
@@ -81,7 +81,7 @@
       border-radius: 5px;
       display: none;
     }
-    .available-tables {
+    .current-queue-count {
       margin-top: 15px;
       font-size: 18px;
     }
@@ -95,7 +95,7 @@
 <body>
   <div class="container">
     <div id="clock"></div>
-    <h2>ระบบจัดการโต๊ะ</h2>
+    <h2>ระบบจัดการคิว</h2>
 
     <div class="queue-group">
       <div class="input-item">
@@ -114,20 +114,20 @@
 
     <div class="input-group">
       <div class="input-item">
-        <label for="tableNumber">หมายเลขโต๊ะ:</label>
-        <input type="number" id="tableNumber" min="1" />
+        <label for="queueNumber">หมายเลขคิว:</label>
+        <input type="number" id="queueNumber" min="1" />
       </div>
-      <button onclick="addTable()">เพิ่มโต๊ะ</button>
+      <button onclick="addQueue()">เพิ่มคิว</button>
     </div>
 
     <div class="notification" id="notification"></div>
-    <div class="table-container" id="tables"></div>
-    <div class="available-tables" id="availableTables"></div>
+    <div class="queue-container" id="queues"></div>
+    <div class="current-queue-count" id="queueCount"></div>
   </div>
 
   <script>
-    const tables = {};
-    const usedTableNumbers = new Set();
+    const queues = {};
+    const usedQueueNumbers = new Set();
 
     setInterval(() => {
       document.getElementById("clock").textContent =
@@ -167,18 +167,18 @@
       return `${m} นาที ${s} วินาที`;
     }
 
-    function addTable() {
-      const tableNumber = parseInt(document.getElementById("tableNumber").value);
+    function addQueue() {
+      const queueNumber = parseInt(document.getElementById("queueNumber").value);
       const lambda = parseFloat(document.getElementById("lambda").value);
       const mu = parseFloat(document.getElementById("mu").value);
       const s = parseInt(document.getElementById("servers").value);
 
-      if (isNaN(tableNumber) || tableNumber < 1) {
-        showNotification("กรุณาใส่หมายเลขโต๊ะให้ถูกต้อง");
+      if (isNaN(queueNumber) || queueNumber < 1) {
+        showNotification("กรุณาใส่หมายเลขคิวให้ถูกต้อง");
         return;
       }
-      if (usedTableNumbers.has(tableNumber) || tables[tableNumber]) {
-        showNotification(`โต๊ะ ${tableNumber} ถูกใช้งานหรือเคยใช้งานแล้ว`);
+      if (usedQueueNumbers.has(queueNumber) || queues[queueNumber]) {
+        showNotification(`คิว ${queueNumber} ถูกใช้งานหรือเคยใช้งานแล้ว`);
         return;
       }
       if (isNaN(lambda) || isNaN(mu) || isNaN(s) || lambda <= 0 || mu <= 0 || s < 1) {
@@ -193,60 +193,59 @@
       }
 
       let adjustedTime = Math.ceil(waitTime);
-      const currentQueue = Object.values(tables).map(t => t.remainingTime);
+      const currentQueue = Object.values(queues).map(t => t.remainingTime);
       const index = currentQueue.length;
 
       if (index >= s) {
         if (index % s === 0) {
-          // คิวแรกของแต่ละกลุ่ม
           const sum = currentQueue.slice(index - s, index).reduce((a, b) => a + b, 0);
           adjustedTime += sum;
         } else {
-          adjustedTime += currentQueue[index - 1]; // เพิ่มเวลาจากคิวก่อนหน้า
+          adjustedTime += currentQueue[index - 1];
         }
       }
 
-      tables[tableNumber] = { remainingTime: adjustedTime };
-      usedTableNumbers.add(tableNumber);
-      showNotification(`โต๊ะ ${tableNumber} เพิ่มแล้ว (${formatTime(adjustedTime)})`);
-      updateTables();
+      queues[queueNumber] = { remainingTime: adjustedTime };
+      usedQueueNumbers.add(queueNumber);
+      showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(adjustedTime)})`);
+      updateQueues();
 
       const interval = setInterval(() => {
-        if (tables[tableNumber]) {
-          if (tables[tableNumber].remainingTime > 0) {
-            tables[tableNumber].remainingTime--;
-            updateTables();
+        if (queues[queueNumber]) {
+          if (queues[queueNumber].remainingTime > 0) {
+            queues[queueNumber].remainingTime--;
+            updateQueues();
           } else {
             clearInterval(interval);
-            removeTable(tableNumber);
+            removeQueue(queueNumber);
           }
         }
       }, 1000);
     }
 
-    function removeTable(tableNumber) {
-      delete tables[tableNumber];
-      usedTableNumbers.delete(Number(tableNumber));
-      showNotification(`โต๊ะ ${tableNumber} ว่างแล้ว`);
-      updateTables();
+    function removeQueue(queueNumber) {
+      delete queues[queueNumber];
+      usedQueueNumbers.delete(Number(queueNumber));
+      showNotification(`คิว ${queueNumber} เสร็จสิ้น`);
+      updateQueues();
     }
 
-    function updateTables() {
-      const container = document.getElementById("tables");
+    function updateQueues() {
+      const container = document.getElementById("queues");
       container.innerHTML = "";
-      Object.keys(tables).forEach(tableNumber => {
-        const t = tables[tableNumber];
+      Object.keys(queues).forEach(queueNumber => {
+        const t = queues[queueNumber];
         const div = document.createElement("div");
-        div.classList.add("table");
+        div.classList.add("queue-box");
         div.innerHTML = `
-          <p>โต๊ะ ${tableNumber}</p>
+          <p>คิว ${queueNumber}</p>
           <p>เหลือเวลา: ${formatTime(t.remainingTime)}</p>
-          <button class="remove-btn" onclick="removeTable(${tableNumber})">ออก</button>
+          <button class="remove-btn" onclick="removeQueue(${queueNumber})">เสร็จ</button>
         `;
         container.appendChild(div);
       });
-      document.getElementById("availableTables").textContent =
-        `จำนวนโต๊ะที่กำลังใช้งาน: ${Object.keys(tables).length}`;
+      document.getElementById("queueCount").textContent =
+        `จำนวนคิวที่กำลังให้บริการ: ${Object.keys(queues).length}`;
     }
   </script>
 </body>
