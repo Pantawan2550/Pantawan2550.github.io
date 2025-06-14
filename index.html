@@ -193,14 +193,17 @@
       }
 
       let adjustedTime = Math.ceil(waitTime);
+      const currentQueue = Object.values(tables).map(t => t.remainingTime);
+      const index = currentQueue.length;
 
-      const currentTables = Object.keys(tables).length;
-
-      // หากจำนวนโต๊ะที่ใช้งานอยู่ > จำนวนพนักงาน
-      if (currentTables >= s) {
-        let totalRemaining = 0;
-        Object.values(tables).forEach(t => totalRemaining += t.remainingTime);
-        adjustedTime += totalRemaining;
+      if (index >= s) {
+        if (index % s === 0) {
+          // คิวแรกของแต่ละกลุ่ม
+          const sum = currentQueue.slice(index - s, index).reduce((a, b) => a + b, 0);
+          adjustedTime += sum;
+        } else {
+          adjustedTime += currentQueue[index - 1]; // เพิ่มเวลาจากคิวก่อนหน้า
+        }
       }
 
       tables[tableNumber] = { remainingTime: adjustedTime };
