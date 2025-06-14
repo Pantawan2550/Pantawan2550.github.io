@@ -12,14 +12,36 @@
       margin: 0;
       padding: 20px;
     }
+
     .container {
-      max-width: 700px;
+      max-width: 600px;
       margin: auto;
       background: white;
       padding: 20px;
       border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .toggle-btn {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .toggle-btn:hover {
+      background-color: #0069d9;
+    }
+
     .input-group, .queue-group {
       display: flex;
       flex-wrap: wrap;
@@ -27,15 +49,18 @@
       gap: 10px;
       margin-bottom: 15px;
     }
+
     .input-item {
       display: flex;
       justify-content: space-between;
       width: 100%;
       max-width: 300px;
     }
+
     label {
       white-space: nowrap;
     }
+
     button {
       background-color: #28a745;
       color: white;
@@ -44,19 +69,30 @@
       border-radius: 5px;
       cursor: pointer;
     }
+
     button:hover {
       background-color: #218838;
     }
+
+    .queue-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
     .queue-box {
       border: 2px solid #333;
       padding: 15px;
       border-radius: 10px;
       background-color: #d4edda;
       width: 120px;
-      margin: 10px;
+      text-align: center;
       font-weight: bold;
       position: relative;
     }
+
     .remove-btn {
       background-color: #dc3545;
       color: white;
@@ -69,9 +105,11 @@
       left: 50%;
       transform: translateX(-50%);
     }
+
     .remove-btn:hover {
       background-color: #c82333;
     }
+
     .notification {
       margin-top: 15px;
       padding: 10px;
@@ -80,30 +118,28 @@
       border-radius: 5px;
       display: none;
     }
+
     .current-queue-count {
       margin-top: 15px;
       font-size: 18px;
     }
+
     #clock {
       font-size: 20px;
       margin-bottom: 10px;
       color: #555;
     }
-    .toggle-btn {
-      background-color: #007bff;
-      margin-top: 10px;
-    }
-    .toggle-btn:hover {
-      background-color: #0069d9;
-    }
   </style>
 </head>
 <body>
   <div class="container">
+    <div class="top-bar">
+      <h2 id="mode-title">ระบบจัดการคิว (พ่อค้าแม่ค้า)</h2>
+      <button class="toggle-btn" id="toggleButton" onclick="toggleMode()">สลับมุมมอง</button>
+    </div>
     <div id="clock"></div>
-    <h2 id="mode-title">ระบบจัดการคิว (พ่อค้าแม่ค้า)</h2>
-    <button class="toggle-btn" onclick="toggleMode()">สลับมุมมอง</button>
 
+    <!-- พ่อค้าแม่ค้า -->
     <div id="merchant-view">
       <div class="queue-group">
         <div class="input-item">
@@ -127,30 +163,31 @@
         </div>
         <button onclick="addQueue()">เพิ่มคิว</button>
       </div>
-
-      <div class="notification" id="notification"></div>
-      <div class="queue-container" id="queues"></div>
-      <div class="current-queue-count" id="queueCount"></div>
     </div>
 
+    <!-- ลูกค้า -->
     <div id="customer-view" style="display: none;">
-      <h3>รายการคิวที่กำลังให้บริการ</h3>
-      <div id="customer-queues"></div>
+      <p><strong>แสดงสถานะคิวเรียลไทม์</strong></p>
     </div>
+
+    <div class="notification" id="notification"></div>
+    <div class="queue-container" id="queues"></div>
+    <div class="current-queue-count" id="queueCount"></div>
   </div>
 
-  <!-- Firebase -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
   <script>
+    // 👉 เปลี่ยนค่าด้านล่างเป็นของ Firebase คุณ
     const firebaseConfig = {
-      apiKey: "AIzaSyDNkrcksSvU6H4xYf9h5hvWYgHFYuy4igw",
-      authDomain: "queue-management-system-79b27.firebaseapp.com",
-      databaseURL: "https://queue-management-system-79b27-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "queue-management-system-79b27",
-      storageBucket: "queue-management-system-79b27.appspot.com",
-      messagingSenderId: "76344006886",
-      appId: "1:76344006886:web:a93cdee9adf70b43e30327"
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -159,27 +196,16 @@
     let queues = {};
     const usedQueueNumbers = new Set();
 
-    function toggleMode() {
-      const merchant = document.getElementById("merchant-view");
-      const customer = document.getElementById("customer-view");
-      const title = document.getElementById("mode-title");
-
-      if (merchant.style.display === "none") {
-        merchant.style.display = "block";
-        customer.style.display = "none";
-        title.textContent = "ระบบจัดการคิว (พ่อค้าแม่ค้า)";
-      } else {
-        merchant.style.display = "none";
-        customer.style.display = "block";
-        title.textContent = "หน้าลูกค้า - คิวเรียลไทม์";
-      }
-    }
+    setInterval(() => {
+      document.getElementById("clock").textContent =
+        `เวลา: ${new Date().toLocaleTimeString("th-TH", { hour12: false })}`;
+    }, 1000);
 
     function showNotification(message) {
       const note = document.getElementById("notification");
       note.textContent = message;
       note.style.display = "block";
-      setTimeout(() => note.style.display = "none", 4000);
+      setTimeout(() => (note.style.display = "none"), 4000);
     }
 
     function factorial(n) {
@@ -196,7 +222,8 @@
       const lastTerm = Math.pow(lambda / mu, s) / (factorial(s) * (1 - ρ));
       const P0 = 1 / (sum + lastTerm);
       const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
-      return (Lq / lambda) * 60; // วินาที
+      const Wq = Lq / lambda;
+      return Wq * 60;
     }
 
     function formatTime(seconds) {
@@ -211,49 +238,50 @@
       const mu = parseFloat(document.getElementById("mu").value);
       const s = parseInt(document.getElementById("servers").value);
 
-      if (isNaN(queueNumber) || queueNumber < 1 || usedQueueNumbers.has(queueNumber) || queues[queueNumber]) {
-        showNotification("หมายเลขคิวไม่ถูกต้องหรือถูกใช้งานแล้ว");
+      if (isNaN(queueNumber) || queueNumber < 1 || usedQueueNumbers.has(queueNumber)) {
+        showNotification("หมายเลขคิวซ้ำหรือไม่ถูกต้อง");
         return;
       }
-
       if (isNaN(lambda) || isNaN(mu) || isNaN(s) || lambda <= 0 || mu <= 0 || s < 1) {
-        showNotification("กรุณากรอก λ, μ และจำนวนพนักงานให้ถูกต้อง");
+        showNotification("โปรดกรอกค่าถูกต้องทั้งหมด");
         return;
       }
 
       const waitTime = calculateMMS(lambda, mu, s);
       if (waitTime === null) {
-        showNotification("λ มากเกินกว่าที่ระบบรับได้");
+        showNotification("ระบบเกินความสามารถ (λ ≥ sμ)");
         return;
       }
 
-      const baseWait = Math.ceil(waitTime);
-      const sorted = Object.keys(queues).map(Number).sort((a, b) => a - b);
-      sorted.push(queueNumber);
-      const newQueues = {};
+      const baseWaitTime = Math.ceil(waitTime);
+      const queueNumbersSorted = Object.keys(queues).map(Number).sort((a, b) => a - b);
+      queueNumbersSorted.push(queueNumber);
+      let newQueues = {};
 
-      for (let i = 0; i < sorted.length; i++) {
-        const q = sorted[i];
+      for (let i = 0; i < queueNumbersSorted.length; i++) {
+        const qNum = queueNumbersSorted[i];
         if (i < s) {
-          newQueues[q] = { remainingTime: baseWait };
+          newQueues[qNum] = { remainingTime: baseWaitTime };
         } else {
-          const prev = newQueues[sorted[i - s]].remainingTime;
-          newQueues[q] = { remainingTime: prev + baseWait };
+          const prevIndex = i - s;
+          const prevQueueNumber = queueNumbersSorted[prevIndex];
+          const prevTime = newQueues[prevQueueNumber].remainingTime;
+          newQueues[qNum] = { remainingTime: prevTime + baseWaitTime };
         }
       }
 
       queues = newQueues;
       usedQueueNumbers.add(queueNumber);
-      db.ref("queues").set(queues);
-      updateMerchantView();
+      updateQueues();
       showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(queues[queueNumber].remainingTime)})`);
+      db.ref("queues").set(queues);
 
       const interval = setInterval(() => {
         if (queues[queueNumber]) {
           if (queues[queueNumber].remainingTime > 0) {
             queues[queueNumber].remainingTime--;
+            updateQueues();
             db.ref("queues").set(queues);
-            updateMerchantView();
           } else {
             clearInterval(interval);
             removeQueue(queueNumber);
@@ -264,54 +292,57 @@
       }, 1000);
     }
 
-    function removeQueue(qNum) {
-      delete queues[qNum];
-      usedQueueNumbers.delete(Number(qNum));
+    function removeQueue(queueNumber) {
+      delete queues[queueNumber];
+      usedQueueNumbers.delete(Number(queueNumber));
+      updateQueues();
       db.ref("queues").set(queues);
-      updateMerchantView();
+      showNotification(`คิว ${queueNumber} เสร็จสิ้น`);
     }
 
-    function updateMerchantView() {
+    function updateQueues() {
       const container = document.getElementById("queues");
       container.innerHTML = "";
-      Object.entries(queues).forEach(([num, data]) => {
-        const box = document.createElement("div");
-        box.className = "queue-box";
-        box.innerHTML = `
-          <p>คิว ${num}</p>
-          <p>เหลือเวลา: ${formatTime(data.remainingTime)}</p>
-          <button class="remove-btn" onclick="removeQueue(${num})">เสร็จ</button>
+      Object.keys(queues).forEach(queueNumber => {
+        const t = queues[queueNumber];
+        const div = document.createElement("div");
+        div.classList.add("queue-box");
+        div.innerHTML = `
+          <p>คิว ${queueNumber}</p>
+          <p>เหลือเวลา: ${formatTime(t.remainingTime)}</p>
+          <button class="remove-btn" onclick="removeQueue(${queueNumber})">เสร็จ</button>
         `;
-        container.appendChild(box);
+        container.appendChild(div);
       });
-      document.getElementById("queueCount").textContent = `จำนวนคิวที่กำลังให้บริการ: ${Object.keys(queues).length}`;
-    }
-
-    function updateCustomerView() {
-      const container = document.getElementById("customer-queues");
-      container.innerHTML = "";
-      Object.entries(queues).forEach(([num, data]) => {
-        const box = document.createElement("div");
-        box.className = "queue-box";
-        box.innerHTML = `
-          <p>คิว ${num}</p>
-          <p>เหลือเวลา: ${formatTime(data.remainingTime)}</p>
-        `;
-        container.appendChild(box);
-      });
+      document.getElementById("queueCount").textContent =
+        `จำนวนคิวที่กำลังให้บริการ: ${Object.keys(queues).length}`;
     }
 
     db.ref("queues").on("value", snapshot => {
       queues = snapshot.val() || {};
       usedQueueNumbers.clear();
       Object.keys(queues).forEach(q => usedQueueNumbers.add(Number(q)));
-      updateMerchantView();
-      updateCustomerView();
+      updateQueues();
     });
 
-    setInterval(() => {
-      document.getElementById("clock").textContent = `เวลา: ${new Date().toLocaleTimeString("th-TH", { hour12: false })}`;
-    }, 1000);
+    function toggleMode() {
+      const merchant = document.getElementById("merchant-view");
+      const customer = document.getElementById("customer-view");
+      const title = document.getElementById("mode-title");
+      const toggleBtn = document.getElementById("toggleButton");
+
+      if (merchant.style.display === "none") {
+        merchant.style.display = "block";
+        customer.style.display = "none";
+        title.textContent = "ระบบจัดการคิว (พ่อค้าแม่ค้า)";
+        toggleBtn.style.display = "inline-block";
+      } else {
+        merchant.style.display = "none";
+        customer.style.display = "block";
+        title.textContent = "หน้าลูกค้า - คิวเรียลไทม์";
+        toggleBtn.style.display = "none"; // ลูกค้าไม่มีสิทธิ์ย้อนกลับ
+      }
+    }
   </script>
 </body>
 </html>
