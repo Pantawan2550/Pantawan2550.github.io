@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ระบบจัดการคิวแบบเรียลไทม์ </title>
+  <title>ระบบจัดการคิวแบบเรียลไทม์ (พ่อค้าแม่ค้า)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -125,7 +125,6 @@
     <div class="current-queue-count" id="queueCount"></div>
   </div>
 
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
   <script>
@@ -142,10 +141,8 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-
     let queues = {};
     const usedQueueNumbers = new Set();
-    const isMerchant = true;
 
     setInterval(() => {
       document.getElementById("clock").textContent =
@@ -174,7 +171,7 @@
       const P0 = 1 / (sum + lastTerm);
       const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
       const Wq = Lq / lambda;
-      return Wq * 60;
+      return Wq * 60; // seconds
     }
 
     function formatTime(seconds) {
@@ -194,20 +191,17 @@
         if (pos <= s) {
           waitTimes[q] = baseWaitTime;
         } else {
-          const groupIndex = Math.floor((pos - s - 1) / s);
-          const indexInGroup = (pos - s - 1) % s;
-
-          if (indexInGroup === 0) {
+          const indexInCycle = (pos - 1) % s;
+          if (indexInCycle === 0) {
             const minTime = Math.min(...Object.values(waitTimes));
             waitTimes[q] = minTime + baseWaitTime;
           } else {
-            const referenceIndex = i - indexInGroup;
-            const referenceQueue = sortedQueues[referenceIndex];
-            waitTimes[q] = waitTimes[referenceQueue];
+            const indexOfStart = i - indexInCycle;
+            const startQueue = sortedQueues[indexOfStart];
+            waitTimes[q] = waitTimes[startQueue];
           }
         }
       }
-
       return waitTimes;
     }
 
