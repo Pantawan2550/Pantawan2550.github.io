@@ -12,6 +12,7 @@
       margin: 0;
       padding: 20px;
     }
+
     .container {
       max-width: 600px;
       margin: auto;
@@ -21,16 +22,23 @@
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       position: relative;
     }
+
     .nav-link {
       position: absolute;
       top: 10px;
       right: 10px;
-      background: #6c757d;
+      background: #28a745; /* สีเขียว */
       color: white;
       padding: 5px 10px;
       border-radius: 5px;
       text-decoration: none;
+      transition: background 0.3s;
     }
+
+    .nav-link:hover {
+      background: #218838; /* เขียวเข้มเมื่อ hover */
+    }
+
     .queue-container {
       display: flex;
       flex-wrap: wrap;
@@ -38,6 +46,7 @@
       gap: 10px;
       margin-top: 20px;
     }
+
     .queue {
       border: 2px solid #333;
       padding: 15px;
@@ -47,10 +56,12 @@
       text-align: center;
       font-weight: bold;
     }
+
     .available-queues {
       margin-top: 20px;
       font-size: 18px;
     }
+
     #clock {
       font-size: 20px;
       margin-bottom: 10px;
