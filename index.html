@@ -174,7 +174,7 @@
       const P0 = 1 / (sum + lastTerm);
       const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
       const Wq = Lq / lambda;
-      return Wq * 60; // convert to seconds
+      return Wq * 60;
     }
 
     function formatTime(seconds) {
@@ -183,10 +183,8 @@
       return `${m} นาที ${s} วินาที`;
     }
 
-    // คำนวณเวลารอคิวตามเงื่อนไขใหม่
     function calculateWaitTimes(queueNumbers, baseWaitTime, s) {
       let waitTimes = {};
-
       const sortedQueues = [...queueNumbers].sort((a, b) => a - b);
 
       for (let i = 0; i < sortedQueues.length; i++) {
@@ -196,39 +194,16 @@
         if (pos <= s) {
           waitTimes[q] = baseWaitTime;
         } else {
-          const modIndex = (pos - s - 1) % s;
-          const cycle = Math.floor((pos - s - 1) / s);
+          const groupIndex = Math.floor((pos - s - 1) / s);
+          const indexInGroup = (pos - s - 1) % s;
 
-          if (cycle === 0) {
-            if (pos === s + 1) {
-              const minTime = Math.min(...Object.values(waitTimes));
-              waitTimes[q] = minTime + baseWaitTime;
-            } else {
-              const prevQ = sortedQueues[i - 1];
-              waitTimes[q] = waitTimes[prevQ] + baseWaitTime;
-            }
-          } else if (cycle === 1) {
-            let sumPrev = 0;
-            for (let j = i - s; j < i; j++) {
-              sumPrev += waitTimes[sortedQueues[j]];
-            }
-            waitTimes[q] = sumPrev + baseWaitTime;
+          if (indexInGroup === 0) {
+            const minTime = Math.min(...Object.values(waitTimes));
+            waitTimes[q] = minTime + baseWaitTime;
           } else {
-            if (cycle % 2 === 0) {
-              if (pos === s + 1 + cycle * s) {
-                const minTime = Math.min(...Object.values(waitTimes));
-                waitTimes[q] = minTime + baseWaitTime;
-              } else {
-                const prevQ = sortedQueues[i - 1];
-                waitTimes[q] = waitTimes[prevQ] + baseWaitTime;
-              }
-            } else {
-              let sumPrev = 0;
-              for (let j = i - s; j < i; j++) {
-                sumPrev += waitTimes[sortedQueues[j]];
-              }
-              waitTimes[q] = sumPrev + baseWaitTime;
-            }
+            const referenceIndex = i - indexInGroup;
+            const referenceQueue = sortedQueues[referenceIndex];
+            waitTimes[q] = waitTimes[referenceQueue];
           }
         }
       }
