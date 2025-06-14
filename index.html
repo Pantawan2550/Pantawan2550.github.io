@@ -12,6 +12,7 @@
       margin: 0;
       padding: 20px;
     }
+
     .container {
       max-width: 600px;
       margin: auto;
@@ -20,6 +21,7 @@
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
+
     .input-group, .queue-group {
       display: flex;
       flex-wrap: wrap;
@@ -27,23 +29,31 @@
       gap: 10px;
       margin-bottom: 15px;
     }
+
     .input-item {
       display: flex;
       justify-content: space-between;
       width: 100%;
       max-width: 300px;
     }
+
     label {
       white-space: nowrap;
     }
+
     button {
-      background-color: #007bff;
+      background-color: #28a745; /* เขียว */
       color: white;
       border: none;
       padding: 10px 15px;
       border-radius: 5px;
       cursor: pointer;
     }
+
+    button:hover {
+      background-color: #218838; /* เขียวเข้มเมื่อ hover */
+    }
+
     .queue-container {
       display: flex;
       flex-wrap: wrap;
@@ -51,18 +61,20 @@
       gap: 10px;
       margin-top: 20px;
     }
+
     .queue-box {
       border: 2px solid #333;
       padding: 15px;
       border-radius: 10px;
-      background-color: lightblue;
+      background-color: #d4edda; /* เขียวอ่อน */
       width: 120px;
       text-align: center;
       font-weight: bold;
       position: relative;
     }
+
     .remove-btn {
-      background-color: red;
+      background-color: #dc3545;
       color: white;
       border: none;
       padding: 5px;
@@ -73,18 +85,25 @@
       left: 50%;
       transform: translateX(-50%);
     }
+
+    .remove-btn:hover {
+      background-color: #c82333;
+    }
+
     .notification {
       margin-top: 15px;
       padding: 10px;
-      background-color: #333;
+      background-color: #28a745;
       color: white;
       border-radius: 5px;
       display: none;
     }
+
     .current-queue-count {
       margin-top: 15px;
       font-size: 18px;
     }
+
     #clock {
       font-size: 20px;
       margin-bottom: 10px;
