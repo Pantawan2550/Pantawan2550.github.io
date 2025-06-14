@@ -228,22 +228,21 @@
         return;
       }
 
-      let adjustedTime = Math.ceil(waitTime);
+      const adjustedTime = Math.ceil(waitTime);
 
-      // เรียงคิวตามหมายเลขคิวเพื่อให้เวลาทบถูกต้อง
       const queueNumbersSorted = Object.keys(queues).map(Number).sort((a, b) => a - b);
       const times = queueNumbersSorted.map(qNum => queues[qNum].remainingTime);
 
-      if (times.length < s) {
+      if (queueNumbersSorted.length < s) {
         // ถ้าน้อยกว่าจำนวนพนักงาน ไม่ต้องทบเวลา
         queues[queueNumber] = { remainingTime: adjustedTime };
       } else {
-        // จำนวนคิวมากกว่าหรือเท่ากับ s
+        // ถ้ามากกว่าหรือเท่ากับ s ให้ทบเวลาตามกฎ
+
         // หาคิวเวลาน้อยที่สุดที่ index = length - s
         const baseIndex = times.length - s;
-        const baseTime = times[baseIndex];
 
-        // เวลาคิวก่อนหน้า (ถ้ามี)
+        // เวลาคิวก่อนหน้า (index สุดท้าย)
         const prevTime = times.length > 0 ? times[times.length - 1] : 0;
 
         // เวลาคิวใหม่ = เวลาคิวก่อนหน้า + เวลาใหม่
