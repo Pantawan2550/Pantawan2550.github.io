@@ -267,6 +267,25 @@
         `จำนวนคิวที่กำลังให้บริการ: ${Object.keys(queues).length}`;
     }
   </script>
+<script src="https://www.gstatic.com/firebasejs/VERSION/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/VERSION/firebase-database-compat.js"></script>
+
+<script>
+
+    apiKey: "AIzaSyDNkrcksSvU6H4xYf9h5hvWYgHFYuy4igw",
+    authDomain: "queue-management-system-79b27.firebaseapp.com",
+    databaseURL: "https://queue-management-system-79b27-default-rtdb.asia-southeast1.firebasedatabase.app", // <-- URL ฐานข้อมูลของคุณ
+    projectId: "queue-management-system-79b27", 
+    storageBucket: "queue-management-system-79b27.appspot.com",
+    messagingSenderId: "76344006886",
+    appId: "1:76344006886:web:a93cdee9adf70b43e30327"
+  };
+
+  const app = firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+</script>
+<script src="script.js"></script>
+
+
 </body>
 </html>
-
