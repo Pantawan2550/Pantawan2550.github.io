@@ -12,96 +12,155 @@
       margin: 0;
       padding: 20px;
     }
-    h1 {
-      color: #333;
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
-    input, button {
-      font-size: 1rem;
-      padding: 8px 12px;
-      margin: 6px;
+
+    .input-group, .queue-group {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 15px;
     }
-    button {
-      cursor: pointer;
-    }
-    #notification {
-      display: none;
-      background: #ffdddd;
-      color: #900;
-      padding: 10px;
-      margin: 10px auto;
-      width: 300px;
-      border-radius: 5px;
-    }
-    #queues {
-      margin-top: 20px;
-      max-width: 500px;
-      margin-left: auto;
-      margin-right: auto;
-      text-align: left;
-    }
-    .queue-box {
-      background: #fff;
-      border: 1px solid #ccc;
-      padding: 12px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+    .input-item {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      width: 100%;
+      max-width: 300px;
     }
-    .queue-box p {
-      margin: 0;
-      font-weight: bold;
-      font-size: 1.1rem;
+
+    label {
+      white-space: nowrap;
+      margin-right: 10px;
     }
-    .queue-box small {
-      color: #555;
+
+    input[type="number"] {
+      flex-grow: 1;
+      padding: 5px;
+      font-size: 1em;
     }
-    .remove-btn {
-      background-color: #d9534f;
-      border: none;
+
+    button {
+      background-color: #28a745;
       color: white;
-      padding: 6px 12px;
+      border: none;
+      padding: 10px 15px;
       border-radius: 5px;
-      font-size: 0.9rem;
+      cursor: pointer;
+      font-size: 1em;
     }
-    #clock {
-      margin-top: 10px;
-      font-size: 1.2rem;
+
+    button:hover {
+      background-color: #218838;
+    }
+
+    .queue-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .queue-box {
+      border: 2px solid #333;
+      padding: 15px;
+      border-radius: 10px;
+      background-color: #d4edda;
+      width: 120px;
+      text-align: center;
       font-weight: bold;
-      color: #444;
+      position: relative;
     }
-    #queueCount {
+
+    .remove-btn {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 5px;
+      border-radius: 5px;
+      cursor: pointer;
+      position: absolute;
+      bottom: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.9em;
+    }
+
+    .remove-btn:hover {
+      background-color: #c82333;
+    }
+
+    .notification {
       margin-top: 15px;
-      font-size: 1.1rem;
-      color: #222;
+      padding: 10px;
+      background-color: #28a745;
+      color: white;
+      border-radius: 5px;
+      display: none;
+    }
+
+    .current-queue-count {
+      margin-top: 15px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    #clock {
+      font-size: 20px;
+      margin-bottom: 10px;
+      color: #555;
+      font-weight: 600;
     }
   </style>
 </head>
 <body>
-  <h1>ระบบจัดการคิว</h1>
+  <div class="container">
+    <div id="clock"></div>
+    <h2>ระบบจัดการคิว</h2>
 
-  <div>
-    <input type="number" id="queueNumber" placeholder="หมายเลขคิว" min="1" />
-    <input type="number" id="lambda" placeholder="อัตราการมาถึง (λ)" step="0.01" min="0.01" />
-    <input type="number" id="mu" placeholder="อัตราการบริการ (μ)" step="0.01" min="0.01" />
-    <input type="number" id="servers" placeholder="จำนวนพนักงาน (s)" min="1" />
-    <button onclick="addQueue()">เพิ่มคิว</button>
+    <div class="queue-group">
+      <div class="input-item">
+        <label for="lambda">λ (ลูกค้ามาถึง/นาที):</label>
+        <input type="number" id="lambda" step="any" placeholder="เช่น 2" />
+      </div>
+      <div class="input-item">
+        <label for="mu">μ (บริการ/นาที):</label>
+        <input type="number" id="mu" step="any" placeholder="เช่น 3" />
+      </div>
+      <div class="input-item">
+        <label for="servers">จำนวนพนักงาน (s):</label>
+        <input type="number" id="servers" placeholder="เช่น 2" />
+      </div>
+    </div>
+
+    <div class="input-group">
+      <div class="input-item">
+        <label for="queueNumber">หมายเลขคิว:</label>
+        <input type="number" id="queueNumber" min="1" />
+      </div>
+      <button onclick="addQueue()">เพิ่มคิว</button>
+    </div>
+
+    <div class="notification" id="notification"></div>
+    <div class="queue-container" id="queues"></div>
+    <div class="current-queue-count" id="queueCount"></div>
   </div>
-
-  <div id="notification"></div>
-  <div id="clock"></div>
-  <div id="queueCount">จำนวนคิวที่กำลังให้บริการ: 0</div>
-  <div id="queues"></div>
 
   <script>
     const API_URL = "https://pantawan2550githubio-queue-management-system.up.railway.app/queue";
     const queues = {};
     const usedQueueNumbers = new Set();
-    const intervals = {}; // เก็บ interval ของแต่ละคิว
 
-    // แสดงเวลาเรียลไทม์
+    // อัปเดตเวลานาฬิกาทุก 1 วินาที
     setInterval(() => {
       document.getElementById("clock").textContent =
         `เวลา: ${new Date().toLocaleTimeString("th-TH", { hour12: false })}`;
@@ -114,14 +173,10 @@
       setTimeout(() => (note.style.display = "none"), 4000);
     }
 
-    function factorial(n) {
-      return n <= 1 ? 1 : n * factorial(n - 1);
-    }
-
-    // คำนวณเวลารอแบบ M/M/s + เงื่อนไขพิเศษ
-    function calculateWaitingTimes(lambda, mu, s, currentQueueTimes) {
+    // คำนวณเวลารอของระบบ M/M/s (หน่วย: วินาที)
+    function calculateMMS(lambda, mu, s) {
       const ρ = lambda / (s * mu);
-      if (ρ >= 1) return null;
+      if (ρ >= 1) return null; // ระบบโอเวอร์โหลด
 
       let sum = 0;
       for (let k = 0; k < s; k++) {
@@ -131,27 +186,12 @@
       const P0 = 1 / (sum + lastTerm);
 
       const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
-      const Wq = Lq / lambda; // นาที
+      const Wq = Lq / lambda; // หน่วย: นาที
+      return Wq * 60; // แปลงเป็นวินาที
+    }
 
-      const baseWait = Math.ceil(Wq * 60); // วินาที
-
-      let waitTimes = [...currentQueueTimes];
-      const index = waitTimes.length;
-
-      let newWait;
-
-      if (index < s) {
-        newWait = baseWait;
-      } else {
-        const groupIndex = Math.floor(index / s) - 1;
-        const groupStart = groupIndex * s;
-        const groupEnd = groupStart + s;
-        const sumGroup = waitTimes.slice(groupStart, groupEnd).reduce((a, b) => a + b, 0);
-        newWait = baseWait + sumGroup;
-      }
-
-      waitTimes.push(newWait);
-      return waitTimes;
+    function factorial(n) {
+      return n <= 1 ? 1 : n * factorial(n - 1);
     }
 
     function formatTime(seconds) {
@@ -166,6 +206,7 @@
       const mu = parseFloat(document.getElementById("mu").value);
       const s = parseInt(document.getElementById("servers").value);
 
+      // ตรวจสอบค่าป้อนเข้า
       if (isNaN(queueNumber) || queueNumber < 1) {
         showNotification("กรุณาใส่หมายเลขคิวให้ถูกต้อง");
         return;
@@ -179,48 +220,57 @@
         return;
       }
 
-      const currentQueueTimes = Object.values(queues).map(q => q.remainingTime);
-
-      const waitTimes = calculateWaitingTimes(lambda, mu, s, currentQueueTimes);
-
-      if (waitTimes === null) {
+      // คำนวณเวลารอ
+      const waitTime = calculateMMS(lambda, mu, s);
+      if (waitTime === null) {
         showNotification("ระบบเกินความสามารถในการบริการ (λ ≥ sμ)");
         return;
       }
 
-      const newWaitTime = waitTimes[waitTimes.length - 1];
+      // ปรับเวลารอเมื่อคิวเกินจำนวนพนักงาน
+      let adjustedTime = Math.ceil(waitTime);
+      const currentQueueTimes = Object.values(queues).map(q => q.remainingTime);
+      const index = currentQueueTimes.length;
 
-      queues[queueNumber] = { remainingTime: newWaitTime };
+      if (index >= s) {
+        if (index % s === 0) {
+          // รวมเวลาของคิว s ตัวก่อนหน้า
+          const sumLastS = currentQueueTimes.slice(index - s, index).reduce((a, b) => a + b, 0);
+          adjustedTime += sumLastS;
+        } else {
+          // รวมกับคิวก่อนหน้า
+          adjustedTime += currentQueueTimes[index - 1];
+        }
+      }
+
+      queues[queueNumber] = { remainingTime: adjustedTime };
       usedQueueNumbers.add(queueNumber);
-      showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(newWaitTime)})`);
+      showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(adjustedTime)})`);
       updateQueues();
 
+      // บันทึกคิวไปยัง API
       try {
         await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ queueNumber, waitTime: newWaitTime })
+          body: JSON.stringify({ queueNumber, waitTime: adjustedTime })
         });
       } catch (error) {
         console.error("ไม่สามารถเชื่อมต่อ API:", error);
       }
 
-      startQueueTimer(queueNumber);
-    }
-
-    function startQueueTimer(queueNumber) {
-      if (intervals[queueNumber]) {
-        clearInterval(intervals[queueNumber]);
-      }
-      intervals[queueNumber] = setInterval(() => {
+      // ตั้ง interval ลดเวลารอ
+      const interval = setInterval(() => {
         if (queues[queueNumber]) {
           if (queues[queueNumber].remainingTime > 0) {
             queues[queueNumber].remainingTime--;
             updateQueues();
           } else {
-            clearInterval(intervals[queueNumber]);
+            clearInterval(interval);
             removeQueue(queueNumber);
           }
+        } else {
+          clearInterval(interval);
         }
       }, 1000);
     }
@@ -228,10 +278,6 @@
     async function removeQueue(queueNumber) {
       delete queues[queueNumber];
       usedQueueNumbers.delete(Number(queueNumber));
-      if (intervals[queueNumber]) {
-        clearInterval(intervals[queueNumber]);
-        delete intervals[queueNumber];
-      }
       showNotification(`คิว ${queueNumber} เสร็จสิ้น`);
       updateQueues();
 
@@ -245,17 +291,19 @@
     function updateQueues() {
       const container = document.getElementById("queues");
       container.innerHTML = "";
+
       Object.keys(queues).forEach(queueNumber => {
-        const t = queues[queueNumber];
+        const q = queues[queueNumber];
         const div = document.createElement("div");
-        div.classList.add("queue-box");
+        div.className = "queue-box";
         div.innerHTML = `
           <p>คิว ${queueNumber}</p>
-          <p>เหลือเวลา: ${formatTime(t.remainingTime)}</p>
+          <p>เหลือเวลา: ${formatTime(q.remainingTime)}</p>
           <button class="remove-btn" onclick="removeQueue(${queueNumber})">เสร็จ</button>
         `;
         container.appendChild(div);
       });
+
       document.getElementById("queueCount").textContent =
         `จำนวนคิวที่กำลังให้บริการ: ${Object.keys(queues).length}`;
     }
@@ -264,19 +312,19 @@
       try {
         const res = await fetch(API_URL);
         const data = await res.json();
-
         data.forEach(q => {
-          queues[q.queueNumber] = { remainingTime: q.waitTime };
-          usedQueueNumbers.add(q.queueNumber);
-          startQueueTimer(q.queueNumber);
+          if (!queues[q.queueNumber]) {
+            queues[q.queueNumber] = { remainingTime: q.waitTime };
+            usedQueueNumbers.add(q.queueNumber);
+          }
         });
-
         updateQueues();
       } catch (err) {
         console.error("โหลดข้อมูลคิวล้มเหลว:", err);
       }
     }
 
+    // โหลดข้อมูลคิวตอนโหลดหน้าเว็บ
     loadQueuesFromAPI();
   </script>
 </body>
