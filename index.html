@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ระบบจัดการคิว</title>
+  <title>ระบบจัดการคิวแบบเรียลไทม์</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -54,13 +54,21 @@
       background-color: #218838;
     }
 
+    .queue-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
     .queue-box {
       border: 2px solid #333;
       padding: 15px;
       border-radius: 10px;
       background-color: #d4edda;
       width: 120px;
-      margin: 10px auto;
+      text-align: center;
       font-weight: bold;
       position: relative;
     }
@@ -91,8 +99,9 @@
       display: none;
     }
 
-    .admin-only {
-      display: none;
+    .current-queue-count {
+      margin-top: 15px;
+      font-size: 18px;
     }
 
     #clock {
@@ -100,53 +109,39 @@
       margin-bottom: 10px;
       color: #555;
     }
-
-    a.link-btn {
-      display: inline-block;
-      margin-top: 15px;
-      padding: 8px 20px;
-      background-color: #007bff;
-      color: white;
-      text-decoration: none;
-      border-radius: 5px;
-    }
   </style>
 </head>
 <body>
   <div class="container">
     <div id="clock"></div>
-    <h2>ระบบจัดการคิว</h2>
+    <h2>ระบบจัดการคิวแบบเรียลไทม์</h2>
 
-    <!-- เฉพาะพ่อค้าแม่ค้า -->
-    <div id="adminSection" class="admin-only">
-      <div class="queue-group">
-        <div class="input-item">
-          <label for="lambda">λ (ลูกค้ามาถึง/นาที):</label>
-          <input type="number" id="lambda" step="any" placeholder="เช่น 2" />
-        </div>
-        <div class="input-item">
-          <label for="mu">μ (บริการ/นาที):</label>
-          <input type="number" id="mu" step="any" placeholder="เช่น 3" />
-        </div>
-        <div class="input-item">
-          <label for="servers">จำนวนพนักงาน (s):</label>
-          <input type="number" id="servers" placeholder="เช่น 2" />
-        </div>
+    <div class="queue-group">
+      <div class="input-item">
+        <label for="lambda">λ (ลูกค้ามาถึง/นาที):</label>
+        <input type="number" id="lambda" step="any" placeholder="เช่น 2" />
       </div>
-
-      <div class="input-group">
-        <div class="input-item">
-          <label for="queueNumber">หมายเลขคิว:</label>
-          <input type="number" id="queueNumber" min="1" />
-        </div>
-        <button onclick="addQueue()">เพิ่มคิว</button>
+      <div class="input-item">
+        <label for="mu">μ (บริการ/นาที):</label>
+        <input type="number" id="mu" step="any" placeholder="เช่น 3" />
       </div>
+      <div class="input-item">
+        <label for="servers">จำนวนพนักงาน (s):</label>
+        <input type="number" id="servers" placeholder="เช่น 2" />
+      </div>
+    </div>
 
-      <a href="index.html" class="link-btn">ดูหน้าลูกค้า</a>
+    <div class="input-group">
+      <div class="input-item">
+        <label for="queueNumber">หมายเลขคิว:</label>
+        <input type="number" id="queueNumber" min="1" />
+      </div>
+      <button onclick="addQueue()">เพิ่มคิว</button>
     </div>
 
     <div class="notification" id="notification"></div>
-    <div id="queues"></div>
+    <div class="queue-container" id="queues"></div>
+    <div class="current-queue-count" id="queueCount"></div>
   </div>
 
   <!-- Firebase SDK -->
@@ -154,12 +149,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
   <script>
-    const isAdmin = new URLSearchParams(location.search).get("admin") === "1";
-
-    if (isAdmin) {
-      document.getElementById("adminSection").style.display = "block";
-    }
-
     const firebaseConfig = {
       apiKey: "AIzaSyDNkrcksSvU6H4xYf9h5hvWYgHFYuy4igw",
       authDomain: "queue-management-system-79b27.firebaseapp.com",
@@ -176,6 +165,7 @@
     let queues = {};
     const usedQueueNumbers = new Set();
 
+    // แสดงเวลานาฬิกา
     setInterval(() => {
       document.getElementById("clock").textContent =
         `เวลา: ${new Date().toLocaleTimeString("th-TH", { hour12: false })}`;
@@ -192,6 +182,7 @@
       return n <= 1 ? 1 : n * factorial(n - 1);
     }
 
+    // คำนวณเวลารอคิวแบบ M/M/s (หน่วยวินาที)
     function calculateMMS(lambda, mu, s) {
       const ρ = lambda / (s * mu);
       if (ρ >= 1) return null;
@@ -218,23 +209,28 @@
       const mu = parseFloat(document.getElementById("mu").value);
       const s = parseInt(document.getElementById("servers").value);
 
-      if (isNaN(queueNumber) || queueNumber < 1 || usedQueueNumbers.has(queueNumber) || queues[queueNumber]) {
-        showNotification("หมายเลขคิวซ้ำหรือไม่ถูกต้อง");
+      if (isNaN(queueNumber) || queueNumber < 1) {
+        showNotification("กรุณาใส่หมายเลขคิวให้ถูกต้อง");
         return;
       }
-
+      if (usedQueueNumbers.has(queueNumber) || queues[queueNumber]) {
+        showNotification(`คิว ${queueNumber} ถูกใช้งานหรือเคยใช้งานแล้ว`);
+        return;
+      }
       if (isNaN(lambda) || isNaN(mu) || isNaN(s) || lambda <= 0 || mu <= 0 || s < 1) {
-        showNotification("ค่าพารามิเตอร์ไม่ถูกต้อง");
+        showNotification("กรุณาใส่ λ, μ และจำนวนพนักงานให้ถูกต้อง");
         return;
       }
 
       const waitTime = calculateMMS(lambda, mu, s);
       if (waitTime === null) {
-        showNotification("ระบบเกินขีดความสามารถ λ ≥ sμ");
+        showNotification("ระบบเกินความสามารถในการบริการ (λ ≥ sμ)");
         return;
       }
 
       const baseWaitTime = Math.ceil(waitTime);
+
+      // รวมหมายเลขคิวเดิมและคิวใหม่แล้วจัดเรียง
       const queueNumbersSorted = Object.keys(queues).map(Number).sort((a, b) => a - b);
       queueNumbersSorted.push(queueNumber);
 
@@ -243,8 +239,10 @@
       for (let i = 0; i < queueNumbersSorted.length; i++) {
         const qNum = queueNumbersSorted[i];
         if (i < s) {
+          // คิวแรก s ตัวใช้ baseWaitTime ตรงๆ
           newQueues[qNum] = { remainingTime: baseWaitTime };
         } else {
+          // คิวที่เกิน s ตัวเวลาทบจากคิวก่อนหน้า offset ด้วย s
           const prevIndex = i - s;
           const prevQueueNumber = queueNumbersSorted[prevIndex];
           const prevTime = newQueues[prevQueueNumber].remainingTime;
@@ -255,10 +253,11 @@
       queues = newQueues;
       usedQueueNumbers.add(queueNumber);
       updateQueues();
-      showNotification(`เพิ่มคิว ${queueNumber} แล้ว`);
+      showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(queues[queueNumber].remainingTime)})`);
 
       db.ref("queues").set(queues);
 
+      // ตั้ง interval ลดเวลาคิวเรียลไทม์
       const interval = setInterval(() => {
         if (queues[queueNumber]) {
           if (queues[queueNumber].remainingTime > 0) {
@@ -293,14 +292,15 @@
         div.innerHTML = `
           <p>คิว ${queueNumber}</p>
           <p>เหลือเวลา: ${formatTime(t.remainingTime)}</p>
+          <button class="remove-btn" onclick="removeQueue(${queueNumber})">เสร็จ</button>
         `;
-        if (isAdmin) {
-          div.innerHTML += `<button class="remove-btn" onclick="removeQueue(${queueNumber})">เสร็จ</button>`;
-        }
         container.appendChild(div);
       });
+      document.getElementById("queueCount").textContent =
+        `จำนวนคิวที่กำลังให้บริการ: ${Object.keys(queues).length}`;
     }
 
+    // โหลดข้อมูลคิวจาก Firebase ทันทีที่โหลดหน้า
     db.ref("queues").on("value", snapshot => {
       queues = snapshot.val() || {};
       usedQueueNumbers.clear();
