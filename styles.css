@@ -44,7 +44,7 @@ button:hover {
     background-color: #218838;
 }
 
-.table-container {
+.queue-container {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
@@ -52,7 +52,7 @@ button:hover {
     margin-top: 20px;
 }
 
-.table {
+.queue {
     border: 2px solid #333;
     padding: 15px;
     border-radius: 10px;
