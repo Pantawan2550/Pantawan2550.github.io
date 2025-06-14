@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>สถานะคิวเรียลไทม์</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    .queue-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .queue-box {
+      border: 2px solid #333;
+      padding: 15px;
+      border-radius: 10px;
+      background-color: #d4edda;
+      width: 120px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .current-queue-count {
+      margin-top: 15px;
+      font-size: 18px;
+    }
+
+    #clock {
+      font-size: 20px;
+      margin-bottom: 10px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="clock"></div>
+    <h2>สถานะคิวเรียลไทม์</h2>
+    <div class="queue-container" id="queues"></div>
+    <div class="current-queue-count" id="queueCount"></div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+  <script>
+    // Firebase config เหมือนกับ admin.html
+    const firebaseConfig = {
+      apiKey: "AIzaSyDNkrcksSvU6H4xYf9h5hvWYgHFYuy4igw",
+      authDomain: "queue-management-system-79b27.firebaseapp.com",
+      databaseURL: "https://queue-management-system-79b27-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "queue-management-system-79b27",
+      storageBucket: "queue-management-system-79b27.appspot.com",
+      messagingSenderId: "76344006886",
+      appId: "1:76344006886:web:a93cdee9adf70b43e30327"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${m} นาที ${s} วินาที`;
+    }
+
+    function updateQueues(queues) {
+      const container = document.getElementById("queues");
+      container.innerHTML = "";
+      Object.keys(queues).forEach(queueNumber => {
+        const t = queues[queueNumber];
+        const div = document.createElement("div");
+        div.classList.add("queue-box");
+        div.innerHTML = `
+          <p>คิว ${queueNumber}</p>
+          <p>เหลือเวลา: ${formatTime(t.remainingTime)}</p>
+        `;
+        container.appendChild(div);
+      });
+      document.getElementById("queueCount").textContent =
+        `จำนวนคิวที่กำลังให้บริการ: ${Object.keys(queues).length}`;
+    }
+
+    // อัปเดตนาฬิกาทุกวินาที
+    setInterval(() => {
+      document.getElementById("clock").textContent =
+        `เวลา: ${new Date().toLocaleTimeString("th-TH", { hour12: false })}`;
+    }, 1000);
+
+    // รับข้อมูลจาก Firebase แบบเรียลไทม์
+    db.ref("queues").on("value", snapshot => {
+      const queues = snapshot.val() || {};
+      updateQueues(queues);
+    });
+  </script>
+</body>
+</html>
