@@ -1,6 +1,6 @@
-const tables = {};
-const MAX_TABLES = 30;
-const DEFAULT_DURATION = 15;
+const queues = {};
+const MAX_QUEUES = 30;
+const DEFAULT_DURATION = 300; // ค่าเริ่มต้น 5 นาที (300 วินาที)
 
 function getThaiTime() {
     return new Date().toLocaleTimeString("th-TH", { hour12: false });
@@ -15,60 +15,63 @@ function showNotification(message) {
     }, 3000);
 }
 
-function addTable() {
-    const tableNumber = parseInt(document.getElementById("tableNumber").value);
+function formatTime(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m} นาที ${s} วินาที`;
+}
+
+function addQueue() {
+    const queueNumber = parseInt(document.getElementById("queueNumber").value);
     const duration = parseInt(document.getElementById("duration").value) || DEFAULT_DURATION;
 
-    if (isNaN(tableNumber)) {
-        showNotification("กรุณาระบุหมายเลขโต๊ะให้ถูกต้อง!");
+    if (isNaN(queueNumber)) {
+        showNotification("กรุณาระบุหมายเลขคิวให้ถูกต้อง!");
         return;
     }
-    if (tables[tableNumber]) {
-        showNotification(`โต๊ะ ${tableNumber} มีลูกค้าอยู่แล้ว!`);
+    if (queues[queueNumber]) {
+        showNotification(`คิวที่ ${queueNumber} กำลังให้บริการอยู่แล้ว!`);
         return;
     }
-    if (Object.keys(tables).length >= MAX_TABLES) {
-        showNotification(`ขออภัย โต๊ะเต็มแล้ว!`);
+    if (Object.keys(queues).length >= MAX_QUEUES) {
+        showNotification(`ขออภัย คิวเต็มแล้ว!`);
         return;
     }
 
-    tables[tableNumber] = duration;
-    showNotification(`[${getThaiTime()}] ลูกค้าเข้าไปที่โต๊ะ ${tableNumber} และจะออกใน ${duration} วินาที`);
-    updateTables();
+    queues[queueNumber] = duration;
+    showNotification(`[${getThaiTime()}] คิวที่ ${queueNumber} เริ่มให้บริการ และจะใช้เวลา ${formatTime(duration)}`);
+    updateQueues();
 
     const interval = setInterval(() => {
-        if (tables[tableNumber] > 0) {
-            tables[tableNumber]--;
-            updateTables();
+        if (queues[queueNumber] > 0) {
+            queues[queueNumber]--;
+            updateQueues();
         } else {
             clearInterval(interval);
-            removeTable(tableNumber);
+            removeQueue(queueNumber);
         }
     }, 1000);
 }
 
-function removeTable(tableNumber) {
-    if (tables[tableNumber] !== undefined) {
-        delete tables[tableNumber];
-        showNotification(`[${getThaiTime()}] ลูกค้าโต๊ะ ${tableNumber} ออกไป`);
-        updateTables();
+function removeQueue(queueNumber) {
+    if (queues[queueNumber] !== undefined) {
+        delete queues[queueNumber];
+        showNotification(`[${getThaiTime()}] คิวที่ ${queueNumber} เสร็จสิ้น`);
+        updateQueues();
     }
 }
 
-function updateTables() {
-    const tablesContainer = document.getElementById("tables");
-    tablesContainer.innerHTML = "";
-    Object.keys(tables).forEach(tableNumber => {
-        const tableDiv = document.createElement("div");
-        tableDiv.classList.add("table");
-        tableDiv.innerHTML = `
-            <p>โต๊ะ ${tableNumber}</p>
-            <p>เหลือเวลา: ${tables[tableNumber]} วินาที</p>
-            <button class="remove-btn" onclick="removeTable(${tableNumber})">ออก</button>
+function updateQueues() {
+    const queuesContainer = document.getElementById("queues");
+    queuesContainer.innerHTML = "";
+    Object.keys(queues).forEach(queueNumber => {
+        const queueDiv = document.createElement("div");
+        queueDiv.classList.add("queue");
+        queueDiv.innerHTML = `
+            <p>คิวที่ ${queueNumber}</p>
+            <p>เหลือเวลา: ${formatTime(queues[queueNumber])}</p>
+            <button class="remove-btn" onclick="removeQueue(${queueNumber})">เสร็จสิ้น</button>
         `;
-        tablesContainer.appendChild(tableDiv);
-        
-
+        queuesContainer.appendChild(queueDiv);
+    });
 }
-}
-
