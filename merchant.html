@@ -12,7 +12,6 @@
       margin: 0;
       padding: 20px;
     }
-
     .container {
       max-width: 600px;
       margin: auto;
@@ -21,7 +20,6 @@
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
-
     .input-group, .queue-group {
       display: flex;
       flex-wrap: wrap;
@@ -29,18 +27,15 @@
       gap: 10px;
       margin-bottom: 15px;
     }
-
     .input-item {
       display: flex;
       justify-content: space-between;
       width: 100%;
       max-width: 300px;
     }
-
     label {
       white-space: nowrap;
     }
-
     button {
       background-color: #28a745;
       color: white;
@@ -49,11 +44,9 @@
       border-radius: 5px;
       cursor: pointer;
     }
-
     button:hover {
       background-color: #218838;
     }
-
     .queue-container {
       display: flex;
       flex-wrap: wrap;
@@ -61,7 +54,6 @@
       gap: 10px;
       margin-top: 20px;
     }
-
     .queue-box {
       border: 2px solid #333;
       padding: 15px;
@@ -72,7 +64,6 @@
       font-weight: bold;
       position: relative;
     }
-
     .remove-btn {
       background-color: #dc3545;
       color: white;
@@ -85,11 +76,9 @@
       left: 50%;
       transform: translateX(-50%);
     }
-
     .remove-btn:hover {
       background-color: #c82333;
     }
-
     .notification {
       margin-top: 15px;
       padding: 10px;
@@ -98,12 +87,10 @@
       border-radius: 5px;
       display: none;
     }
-
     .current-queue-count {
       margin-top: 15px;
       font-size: 18px;
     }
-
     #clock {
       font-size: 20px;
       margin-bottom: 10px;
@@ -165,7 +152,6 @@
     let queues = {};
     const usedQueueNumbers = new Set();
 
-    // เวลานาฬิกา
     setInterval(() => {
       document.getElementById("clock").textContent =
         `เวลา: ${new Date().toLocaleTimeString("th-TH", { hour12: false })}`;
@@ -232,9 +218,13 @@
       const index = currentQueue.length;
 
       if (index >= s) {
-        if (index % s === 0) {
+        const mod = index % s;
+        if (mod === 0) {
           const sum = currentQueue.slice(index - s, index).reduce((a, b) => a + b, 0);
           adjustedTime += sum;
+        } else if (mod === 1) {
+          const minTime = Math.min(...currentQueue);
+          adjustedTime += minTime;
         } else {
           adjustedTime += currentQueue[index - 1];
         }
@@ -244,7 +234,6 @@
       usedQueueNumbers.add(queueNumber);
       updateQueues();
       showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(adjustedTime)})`);
-
       db.ref("queues").set(queues);
 
       const interval = setInterval(() => {
@@ -287,7 +276,6 @@
         `จำนวนคิวที่กำลังให้บริการ: ${Object.keys(queues).length}`;
     }
 
-    // เรียกใช้งาน Firebase เมื่อโหลดหน้า
     db.ref("queues").on("value", snapshot => {
       queues = snapshot.val() || {};
       Object.keys(queues).forEach(q => usedQueueNumbers.add(Number(q)));
