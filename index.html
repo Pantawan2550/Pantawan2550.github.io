@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ระบบจัดการคิว</title>
+  <title>ระบบจัดการคิวแบบเรียลไทม์</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -42,7 +42,7 @@
     }
 
     button {
-      background-color: #28a745; /* เขียว */
+      background-color: #28a745;
       color: white;
       border: none;
       padding: 10px 15px;
@@ -51,7 +51,7 @@
     }
 
     button:hover {
-      background-color: #218838; /* เขียวเข้มเมื่อ hover */
+      background-color: #218838;
     }
 
     .queue-container {
@@ -66,7 +66,7 @@
       border: 2px solid #333;
       padding: 15px;
       border-radius: 10px;
-      background-color: #d4edda; /* เขียวอ่อน */
+      background-color: #d4edda;
       width: 120px;
       text-align: center;
       font-weight: bold;
@@ -114,7 +114,7 @@
 <body>
   <div class="container">
     <div id="clock"></div>
-    <h2>ระบบจัดการคิว</h2>
+    <h2>ระบบจัดการคิวแบบเรียลไทม์</h2>
 
     <div class="queue-group">
       <div class="input-item">
@@ -144,10 +144,28 @@
     <div class="current-queue-count" id="queueCount"></div>
   </div>
 
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
   <script>
-    const queues = {};
+    const firebaseConfig = {
+      apiKey: "AIzaSyDNkrcksSvU6H4xYf9h5hvWYgHFYuy4igw",
+      authDomain: "queue-management-system-79b27.firebaseapp.com",
+      databaseURL: "https://queue-management-system-79b27-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "queue-management-system-79b27",
+      storageBucket: "queue-management-system-79b27.appspot.com",
+      messagingSenderId: "76344006886",
+      appId: "1:76344006886:web:a93cdee9adf70b43e30327"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let queues = {};
     const usedQueueNumbers = new Set();
 
+    // เวลานาฬิกา
     setInterval(() => {
       document.getElementById("clock").textContent =
         `เวลา: ${new Date().toLocaleTimeString("th-TH", { hour12: false })}`;
@@ -160,24 +178,22 @@
       setTimeout(() => (note.style.display = "none"), 4000);
     }
 
+    function factorial(n) {
+      return n <= 1 ? 1 : n * factorial(n - 1);
+    }
+
     function calculateMMS(lambda, mu, s) {
       const ρ = lambda / (s * mu);
       if (ρ >= 1) return null;
-
       let sum = 0;
       for (let k = 0; k < s; k++) {
         sum += Math.pow(lambda / mu, k) / factorial(k);
       }
       const lastTerm = Math.pow(lambda / mu, s) / (factorial(s) * (1 - ρ));
       const P0 = 1 / (sum + lastTerm);
-
       const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
       const Wq = Lq / lambda;
       return Wq * 60;
-    }
-
-    function factorial(n) {
-      return n <= 1 ? 1 : n * factorial(n - 1);
     }
 
     function formatTime(seconds) {
@@ -226,14 +242,17 @@
 
       queues[queueNumber] = { remainingTime: adjustedTime };
       usedQueueNumbers.add(queueNumber);
-      showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(adjustedTime)})`);
       updateQueues();
+      showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(adjustedTime)})`);
+
+      db.ref("queues").set(queues);
 
       const interval = setInterval(() => {
         if (queues[queueNumber]) {
           if (queues[queueNumber].remainingTime > 0) {
             queues[queueNumber].remainingTime--;
             updateQueues();
+            db.ref("queues").set(queues);
           } else {
             clearInterval(interval);
             removeQueue(queueNumber);
@@ -245,8 +264,9 @@
     function removeQueue(queueNumber) {
       delete queues[queueNumber];
       usedQueueNumbers.delete(Number(queueNumber));
-      showNotification(`คิว ${queueNumber} เสร็จสิ้น`);
       updateQueues();
+      db.ref("queues").set(queues);
+      showNotification(`คิว ${queueNumber} เสร็จสิ้น`);
     }
 
     function updateQueues() {
@@ -266,26 +286,13 @@
       document.getElementById("queueCount").textContent =
         `จำนวนคิวที่กำลังให้บริการ: ${Object.keys(queues).length}`;
     }
+
+    // เรียกใช้งาน Firebase เมื่อโหลดหน้า
+    db.ref("queues").on("value", snapshot => {
+      queues = snapshot.val() || {};
+      Object.keys(queues).forEach(q => usedQueueNumbers.add(Number(q)));
+      updateQueues();
+    });
   </script>
-<script src="https://www.gstatic.com/firebasejs/VERSION/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/VERSION/firebase-database-compat.js"></script>
-
-<script>
-
-    apiKey: "AIzaSyDNkrcksSvU6H4xYf9h5hvWYgHFYuy4igw",
-    authDomain: "queue-management-system-79b27.firebaseapp.com",
-    databaseURL: "https://queue-management-system-79b27-default-rtdb.asia-southeast1.firebasedatabase.app", // <-- URL ฐานข้อมูลของคุณ
-    projectId: "queue-management-system-79b27", 
-    storageBucket: "queue-management-system-79b27.appspot.com",
-    messagingSenderId: "76344006886",
-    appId: "1:76344006886:web:a93cdee9adf70b43e30327"
-  };
-
-  const app = firebase.initializeApp(firebaseConfig);
-  const database = firebase.database();
-</script>
-<script src="script.js"></script>
-
-
 </body>
 </html>
