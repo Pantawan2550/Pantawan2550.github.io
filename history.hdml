@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>ประวัติการเข้า-ออกคิว</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      padding: 20px;
+      text-align: center;
+    }
+    h2 {
+      color: #333;
+    }
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 90%;
+      max-width: 700px;
+    }
+    th, td {
+      border: 1px solid #999;
+      padding: 8px 12px;
+      text-align: center;
+    }
+    th {
+      background-color: #eee;
+    }
+    a {
+      display: inline-block;
+      margin-top: 20px;
+      text-decoration: none;
+      color: #007bff;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h2>ประวัติการเข้า-ออกคิว</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>หมายเลขคิว</th>
+        <th>เวลาเข้า</th>
+        <th>เวลาออก</th>
+      </tr>
+    </thead>
+    <tbody id="historyTable"></tbody>
+  </table>
+  <a href="index.html">← กลับไปหน้าหลัก</a>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDNkrcksSvU6H4xYf9h5hvWYgHFYuy4igw",
+      authDomain: "queue-management-system-79b27.firebaseapp.com",
+      databaseURL: "https://queue-management-system-79b27-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "queue-management-system-79b27",
+      storageBucket: "queue-management-system-79b27.appspot.com",
+      messagingSenderId: "76344006886",
+      appId: "1:76344006886:web:a93cdee9adf70b43e30327"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const table = document.getElementById("historyTable");
+    db.ref("history").on("value", snapshot => {
+      const data = snapshot.val() || {};
+      table.innerHTML = "";
+      const sorted = Object.values(data).sort((a, b) => {
+        return new Date(`1970/01/01 ${a.entryTime}`) - new Date(`1970/01/01 ${b.entryTime}`);
+      });
+      sorted.forEach(item => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${item.queueNumber}</td>
+          <td>${item.entryTime}</td>
+          <td>${item.exitTime}</td>
+        `;
+        table.appendChild(row);
+      });
+    });
+  </script>
+</body>
+</html>
