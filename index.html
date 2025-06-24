@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ระบบจัดการคิวแบบเรียลไทม์</title>
+  <title>ระบบจัดการคิวแบบเรียลไทม์ (พ่อค้าแม่ค้า)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -125,8 +125,7 @@
     <div class="current-queue-count" id="queueCount"></div>
 
     <div style="margin-top: 20px;">
-      <button onclick="clearAllQueues()" style="background-color:#dc3545;">ล้างข้อมูลคิว</button>
-      <a href="history.html" style="margin-left: 15px;">ดูประวัติการเข้า-ออก</a>
+      <a href="history.html">ดูประวัติการเข้า-ออก</a>
     </div>
   </div>
 
@@ -144,6 +143,7 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+
     let queues = {};
     const usedQueueNumbers = new Set();
 
@@ -179,7 +179,7 @@
 
     function formatTime(seconds) {
       const m = Math.floor(seconds / 60);
-      const s = Math.floor(seconds % 60);
+      const s = seconds % 60;
       return `${m} นาที ${s} วินาที`;
     }
 
@@ -189,6 +189,7 @@
       for (let i = 0; i < sortedQueues.length; i++) {
         const q = sortedQueues[i];
         const pos = i + 1;
+
         if (pos <= s) {
           waitTimes[q] = baseWaitTime;
         } else if (pos <= 2 * s) {
@@ -265,16 +266,6 @@
       usedQueueNumbers.delete(Number(queueNumber));
       db.ref("queues").set(queues);
       showNotification(`คิว ${queueNumber} เสร็จสิ้น`);
-    }
-
-    function clearAllQueues() {
-      if (confirm("คุณแน่ใจว่าต้องการล้างคิวทั้งหมดหรือไม่?")) {
-        db.ref("queues").remove();
-        queues = {};
-        usedQueueNumbers.clear();
-        updateQueues();
-        showNotification("ล้างคิวทั้งหมดแล้ว");
-      }
     }
 
     function updateQueues() {
