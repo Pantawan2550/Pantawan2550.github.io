@@ -180,16 +180,14 @@
       return `${m} นาที ${s} วินาที`;
     }
 
-    // ✅ เวอร์ชันที่ให้คิว 1–s รอ baseWaitTime, ถัดไปค่อยสะสมเพิ่ม
     function calculateWaitTimes(queueNumbers, baseWaitTime, s) {
       let waitTimes = {};
       const sortedQueues = [...queueNumbers].sort((a, b) => a - b);
-      let workerTimes = Array(s).fill(baseWaitTime); // เริ่มจาก baseWaitTime
+      let workerTimes = Array(s).fill(baseWaitTime); // เริ่มต้นพนักงานแต่ละคนรอ baseWaitTime
 
       for (let i = 0; i < sortedQueues.length; i++) {
         const q = sortedQueues[i];
 
-        // หาพนักงานที่ว่างเร็วที่สุด
         let minIndex = 0;
         for (let j = 1; j < s; j++) {
           if (workerTimes[j] < workerTimes[minIndex]) {
@@ -197,8 +195,8 @@
           }
         }
 
-        waitTimes[q] = workerTimes[minIndex]; // เวลาที่ลูกค้าคนนี้รอ
-        workerTimes[minIndex] += baseWaitTime; // เพิ่มเวลาให้พนักงานคนนั้น
+        waitTimes[q] = workerTimes[minIndex];
+        workerTimes[minIndex] += baseWaitTime;
       }
 
       return waitTimes;
@@ -225,11 +223,11 @@
         return;
       }
 
+      // รวมคิวเดิมกับคิวใหม่
       const allQueueNumbers = [...Object.keys(queues).map(Number), queueNumber];
       const newWaitTimes = calculateWaitTimes(allQueueNumbers, Math.ceil(baseWaitTime), s);
 
-      queues = {};
-      usedQueueNumbers.clear();
+      // เพิ่มหรืออัปเดตคิวทีละตัวโดยไม่ล้างทั้งหมด
       for (const qNum of allQueueNumbers) {
         queues[qNum] = { remainingTime: newWaitTimes[qNum] };
         usedQueueNumbers.add(qNum);
