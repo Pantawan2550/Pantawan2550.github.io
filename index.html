@@ -186,21 +186,24 @@
     function calculateWaitTimes(queueNumbers, baseWaitTime, s) {
       let waitTimes = {};
       const sortedQueues = [...queueNumbers].sort((a, b) => a - b);
+
       for (let i = 0; i < sortedQueues.length; i++) {
         const q = sortedQueues[i];
         const pos = i + 1;
 
         if (pos <= s) {
           waitTimes[q] = baseWaitTime;
-        } else if (pos <= 2 * s) {
-          const firstN = sortedQueues.slice(0, s).map(num => waitTimes[num]);
-          const min = Math.min(...firstN);
-          waitTimes[q] = baseWaitTime + min;
         } else {
-          const prevQs = sortedQueues.slice(i - s, i).map(num => waitTimes[num]);
-          waitTimes[q] = baseWaitTime + prevQs.reduce((a, b) => a + b, 0);
+          const groupIndex = Math.floor((pos - 1) / s);
+          const prevStart = (groupIndex - 1) * s;
+          const prevEnd = groupIndex * s;
+          const prevGroup = sortedQueues.slice(prevStart, prevEnd);
+          const prevTimes = prevGroup.map(num => waitTimes[num] || 0);
+          const minPrev = Math.min(...prevTimes);
+          waitTimes[q] = baseWaitTime + minPrev;
         }
       }
+
       return waitTimes;
     }
 
