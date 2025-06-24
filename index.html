@@ -129,6 +129,7 @@
     </div>
   </div>
 
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
   <script>
@@ -146,6 +147,7 @@
 
     let queues = {};
     const usedQueueNumbers = new Set();
+    const timers = {};
 
     setInterval(() => {
       document.getElementById("clock").textContent =
@@ -174,7 +176,7 @@
       const P0 = 1 / (sum + lastTerm);
       const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
       const Wq = Lq / lambda;
-      return Wq * 60;
+      return Wq * 60; // seconds
     }
 
     function formatTime(seconds) {
@@ -239,20 +241,6 @@
 
       db.ref("queues").set(queues);
       showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(queues[queueNumber].remainingTime)})`);
-
-      const interval = setInterval(() => {
-        if (queues[queueNumber]) {
-          if (queues[queueNumber].remainingTime > 0) {
-            queues[queueNumber].remainingTime--;
-            db.ref("queues").set(queues);
-          } else {
-            clearInterval(interval);
-            removeQueue(queueNumber);
-          }
-        } else {
-          clearInterval(interval);
-        }
-      }, 1000);
     }
 
     function removeQueue(queueNumber) {
@@ -291,11 +279,31 @@
         `จำนวนคิวที่กำลังให้บริการ: ${Object.keys(queues).length}`;
     }
 
+    function startTimerForAllQueues() {
+      Object.keys(queues).forEach(queueNumber => {
+        if (timers[queueNumber]) return; // ป้องกันไม่ให้สร้าง interval ซ้ำ
+        timers[queueNumber] = setInterval(() => {
+          if (queues[queueNumber]) {
+            if (queues[queueNumber].remainingTime > 0) {
+              queues[queueNumber].remainingTime--;
+              db.ref("queues").set(queues);
+            } else {
+              clearInterval(timers[queueNumber]);
+              removeQueue(queueNumber);
+            }
+          } else {
+            clearInterval(timers[queueNumber]);
+          }
+        }, 1000);
+      });
+    }
+
     db.ref("queues").on("value", snapshot => {
       queues = snapshot.val() || {};
       usedQueueNumbers.clear();
       Object.keys(queues).forEach(q => usedQueueNumbers.add(Number(q)));
       updateQueues();
+      startTimerForAllQueues();
     });
   </script>
 </body>
