@@ -188,7 +188,6 @@
       for (let q of sortedQueues) {
         const prevWait = existingQueues[q]?.remainingTime || 0;
 
-        // หาพนักงานที่เวลาน้อยที่สุด
         let minIndex = 0;
         for (let j = 1; j < s; j++) {
           if (workerTimes[j] < workerTimes[minIndex]) {
@@ -196,10 +195,7 @@
           }
         }
 
-        // เวลารอใหม่ = เวลาที่พนักงานมี + เวลารอเดิมของคิว
         waitTimes[q] = workerTimes[minIndex] + prevWait;
-
-        // เพิ่มเวลารอฐานไปที่พนักงานคนนี้
         workerTimes[minIndex] += baseWaitTime;
       }
 
@@ -232,7 +228,7 @@
 
       for (const qNum of allQueueNumbers) {
         if (queues[qNum]) {
-          // เก็บเวลาที่เหลือจริงไว้ ถ้าเวลาคำนวณใหม่มากกว่าก็ใช้เวลาคำนวณใหม่ (อาจเกิดกรณีเวลาหมดแล้วเพิ่มใหม่)
+          // เก็บเวลาที่เหลือจริงไว้ ถ้าเวลาคำนวณใหม่มากกว่าก็ใช้เวลาคำนวณใหม่ (กันเวลาหมดแล้วเพิ่มใหม่)
           queues[qNum].remainingTime = Math.max(queues[qNum].remainingTime, newWaitTimes[qNum]);
         } else {
           queues[qNum] = { remainingTime: newWaitTimes[qNum] };
