@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -96,7 +97,6 @@
   <div class="container">
     <h2>ระบบจัดการคิว (พ่อค้าแม่ค้า)</h2>
     <div id="clock"></div>
-
     <div class="queue-group">
       <div class="input-item">
         <label for="lambda">λ (ลูกค้ามาถึง/นาที):</label>
@@ -111,7 +111,6 @@
         <input type="number" id="servers" placeholder="เช่น 2" />
       </div>
     </div>
-
     <div class="input-group">
       <div class="input-item">
         <label for="queueNumber">หมายเลขคิว:</label>
@@ -119,12 +118,10 @@
       </div>
       <button onclick="addQueue()">เพิ่มคิว</button>
     </div>
-
     <div class="notification" id="notification"></div>
     <div class="queue-container" id="queues"></div>
     <div class="current-queue-count" id="queueCount"></div>
   </div>
-
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
   <script>
@@ -138,28 +135,23 @@
       appId: "1:76344006886:web:a93cdee9adf70b43e30327",
       measurementId: "G-F1R4Q52535"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     let queues = {};
     const usedQueueNumbers = new Set();
-
     setInterval(() => {
       document.getElementById("clock").textContent =
         `เวลา: ${new Date().toLocaleTimeString("th-TH", { hour12: false })}`;
     }, 1000);
-
     function showNotification(message) {
       const note = document.getElementById("notification");
       note.textContent = message;
       note.style.display = "block";
       setTimeout(() => (note.style.display = "none"), 4000);
     }
-
     function factorial(n) {
       return n <= 1 ? 1 : n * factorial(n - 1);
     }
-
     function calculateMMS(lambda, mu, s) {
       const ρ = lambda / (s * mu);
       if (ρ >= 1) return null;
@@ -171,43 +163,40 @@
       const P0 = 1 / (sum + lastTerm);
       const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
       const Wq = Lq / lambda;
-      return Wq * 60; // วินาที
+      return Wq * 60; // seconds
     }
-
     function formatTime(seconds) {
       const m = Math.floor(seconds / 60);
       const s = seconds % 60;
       return `${m} นาที ${s} วินาที`;
     }
-
-    function calculateWaitTimes(queueNumbers, baseWaitTime, s, existingQueues) {
+    function calculateWaitTimes(queueNumbers, baseWaitTime, s) {
       let waitTimes = {};
       const sortedQueues = [...queueNumbers].sort((a, b) => a - b);
-      let workerTimes = Array(s).fill(0);
-
-      for (let q of sortedQueues) {
-        const prevWait = existingQueues[q]?.remainingTime || 0;
-
-        let minIndex = 0;
-        for (let j = 1; j < s; j++) {
-          if (workerTimes[j] < workerTimes[minIndex]) {
-            minIndex = j;
+      for (let i = 0; i < sortedQueues.length; i++) {
+        const q = sortedQueues[i];
+        const pos = i + 1;
+        if (pos <= s) {
+          waitTimes[q] = baseWaitTime;
+        } else {
+          const indexInCycle = (pos - 1) % s;
+          if (indexInCycle === 0) {
+            const minTime = Math.min(...Object.values(waitTimes));
+            waitTimes[q] = minTime + baseWaitTime;
+          } else {
+            const indexOfStart = i - indexInCycle;
+            const startQueue = sortedQueues[indexOfStart];
+            waitTimes[q] = waitTimes[startQueue];
           }
         }
-
-        waitTimes[q] = workerTimes[minIndex] + prevWait;
-        workerTimes[minIndex] += baseWaitTime;
       }
-
       return waitTimes;
     }
-
     function addQueue() {
       const queueNumber = parseInt(document.getElementById("queueNumber").value);
       const lambda = parseFloat(document.getElementById("lambda").value);
       const mu = parseFloat(document.getElementById("mu").value);
       const s = parseInt(document.getElementById("servers").value);
-
       if (isNaN(queueNumber) || queueNumber < 1 || usedQueueNumbers.has(queueNumber)) {
         showNotification("หมายเลขคิวซ้ำหรือไม่ถูกต้อง");
         return;
@@ -216,29 +205,21 @@
         showNotification("โปรดกรอกค่าถูกต้องทั้งหมด");
         return;
       }
-
       const baseWaitTime = calculateMMS(lambda, mu, s);
       if (baseWaitTime === null) {
         showNotification("ระบบเกินความสามารถ (λ ≥ sμ)");
         return;
       }
-
       const allQueueNumbers = [...Object.keys(queues).map(Number), queueNumber];
-      const newWaitTimes = calculateWaitTimes(allQueueNumbers, Math.ceil(baseWaitTime), s, queues);
-
+      const newWaitTimes = calculateWaitTimes(allQueueNumbers, Math.ceil(baseWaitTime), s);
+      queues = {};
+      usedQueueNumbers.clear();
       for (const qNum of allQueueNumbers) {
-        if (queues[qNum]) {
-          // เก็บเวลาที่เหลือจริงไว้ ถ้าเวลาคำนวณใหม่มากกว่าก็ใช้เวลาคำนวณใหม่ (กันเวลาหมดแล้วเพิ่มใหม่)
-          queues[qNum].remainingTime = Math.max(queues[qNum].remainingTime, newWaitTimes[qNum]);
-        } else {
-          queues[qNum] = { remainingTime: newWaitTimes[qNum] };
-          usedQueueNumbers.add(qNum);
-        }
+        queues[qNum] = { remainingTime: newWaitTimes[qNum] };
+        usedQueueNumbers.add(qNum);
       }
-
       db.ref("queues").set(queues);
       showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(queues[queueNumber].remainingTime)})`);
-
       const interval = setInterval(() => {
         if (queues[queueNumber]) {
           if (queues[queueNumber].remainingTime > 0) {
@@ -253,34 +234,31 @@
         }
       }, 1000);
     }
-
     function removeQueue(queueNumber) {
       delete queues[queueNumber];
       usedQueueNumbers.delete(Number(queueNumber));
       db.ref("queues").set(queues);
       showNotification(`คิว ${queueNumber} เสร็จสิ้น`);
     }
-
     function updateQueues() {
       const container = document.getElementById("queues");
       container.innerHTML = "";
       Object.keys(queues)
         .sort((a, b) => Number(a) - Number(b))
         .forEach(queueNumber => {
-          const t = queues[queueNumber];
-          const div = document.createElement("div");
-          div.classList.add("queue-box");
-          div.innerHTML = `
-            <p>คิว ${queueNumber}</p>
-            <p>เหลือเวลา: ${formatTime(t.remainingTime)}</p>
-            <button class="remove-btn" onclick="removeQueue(${queueNumber})">เสร็จ</button>
-          `;
-          container.appendChild(div);
-        });
+        const t = queues[queueNumber];
+        const div = document.createElement("div");
+        div.classList.add("queue-box");
+        div.innerHTML = `
+          <p>คิว ${queueNumber}</p>
+          <p>เหลือเวลา: ${formatTime(t.remainingTime)}</p>
+          <button class="remove-btn" onclick="removeQueue(${queueNumber})">เสร็จ</button>
+        `;
+        container.appendChild(div);
+      });
       document.getElementById("queueCount").textContent =
         `จำนวนคิวที่กำลังให้บริการ: ${Object.keys(queues).length}`;
     }
-
     db.ref("queues").on("value", snapshot => {
       queues = snapshot.val() || {};
       usedQueueNumbers.clear();
