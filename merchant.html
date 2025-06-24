@@ -123,8 +123,13 @@
     <div class="notification" id="notification"></div>
     <div class="queue-container" id="queues"></div>
     <div class="current-queue-count" id="queueCount"></div>
+
+    <div style="margin-top: 20px;">
+      <a href="history.html">ดูประวัติการเข้า-ออก</a>
+    </div>
   </div>
 
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
   <script>
@@ -135,14 +140,14 @@
       projectId: "queue-management-system-79b27",
       storageBucket: "queue-management-system-79b27.appspot.com",
       messagingSenderId: "76344006886",
-      appId: "1:76344006886:web:a93cdee9adf70b43e30327",
-      measurementId: "G-F1R4Q52535"
+      appId: "1:76344006886:web:a93cdee9adf70b43e30327"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+
     let queues = {};
     const usedQueueNumbers = new Set();
+    const timers = {};
 
     setInterval(() => {
       document.getElementById("clock").textContent =
@@ -191,17 +196,16 @@
         if (pos <= s) {
           waitTimes[q] = baseWaitTime;
         } else {
-          const indexInCycle = (pos - 1) % s;
-          if (indexInCycle === 0) {
-            const minTime = Math.min(...Object.values(waitTimes));
-            waitTimes[q] = minTime + baseWaitTime;
-          } else {
-            const indexOfStart = i - indexInCycle;
-            const startQueue = sortedQueues[indexOfStart];
-            waitTimes[q] = waitTimes[startQueue];
-          }
+          const groupIndex = Math.floor((pos - 1) / s);
+          const prevStart = (groupIndex - 1) * s;
+          const prevEnd = groupIndex * s;
+          const prevGroup = sortedQueues.slice(prevStart, prevEnd);
+          const prevTimes = prevGroup.map(num => waitTimes[num] || 0);
+          const minPrev = Math.min(...prevTimes);
+          waitTimes[q] = baseWaitTime + minPrev;
         }
       }
+
       return waitTimes;
     }
 
@@ -229,32 +233,26 @@
       const allQueueNumbers = [...Object.keys(queues).map(Number), queueNumber];
       const newWaitTimes = calculateWaitTimes(allQueueNumbers, Math.ceil(baseWaitTime), s);
 
-      queues = {};
-      usedQueueNumbers.clear();
-      for (const qNum of allQueueNumbers) {
-        queues[qNum] = { remainingTime: newWaitTimes[qNum] };
-        usedQueueNumbers.add(qNum);
-      }
+      queues[queueNumber] = {
+        remainingTime: newWaitTimes[queueNumber],
+        entryTime: new Date().toLocaleTimeString("th-TH", { hour12: false })
+      };
+      usedQueueNumbers.add(queueNumber);
 
       db.ref("queues").set(queues);
       showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(queues[queueNumber].remainingTime)})`);
-
-      const interval = setInterval(() => {
-        if (queues[queueNumber]) {
-          if (queues[queueNumber].remainingTime > 0) {
-            queues[queueNumber].remainingTime--;
-            db.ref("queues").set(queues);
-          } else {
-            clearInterval(interval);
-            removeQueue(queueNumber);
-          }
-        } else {
-          clearInterval(interval);
-        }
-      }, 1000);
     }
 
     function removeQueue(queueNumber) {
+      const exitTime = new Date().toLocaleTimeString("th-TH", { hour12: false });
+      const entryTime = queues[queueNumber]?.entryTime || "ไม่ทราบเวลาเข้า";
+
+      db.ref("history").push({
+        queueNumber: queueNumber,
+        entryTime: entryTime,
+        exitTime: exitTime
+      });
+
       delete queues[queueNumber];
       usedQueueNumbers.delete(Number(queueNumber));
       db.ref("queues").set(queues);
@@ -267,18 +265,37 @@
       Object.keys(queues)
         .sort((a, b) => Number(a) - Number(b))
         .forEach(queueNumber => {
-        const t = queues[queueNumber];
-        const div = document.createElement("div");
-        div.classList.add("queue-box");
-        div.innerHTML = `
-          <p>คิว ${queueNumber}</p>
-          <p>เหลือเวลา: ${formatTime(t.remainingTime)}</p>
-          <button class="remove-btn" onclick="removeQueue(${queueNumber})">เสร็จ</button>
-        `;
-        container.appendChild(div);
-      });
+          const t = queues[queueNumber];
+          const div = document.createElement("div");
+          div.classList.add("queue-box");
+          div.innerHTML = `
+            <p>คิว ${queueNumber}</p>
+            <p>เหลือเวลา: ${formatTime(t.remainingTime)}</p>
+            <button class="remove-btn" onclick="removeQueue(${queueNumber})">เสร็จ</button>
+          `;
+          container.appendChild(div);
+        });
       document.getElementById("queueCount").textContent =
         `จำนวนคิวที่กำลังให้บริการ: ${Object.keys(queues).length}`;
+    }
+
+    function startTimerForAllQueues() {
+      Object.keys(queues).forEach(queueNumber => {
+        if (timers[queueNumber]) return; // ป้องกันไม่ให้สร้าง interval ซ้ำ
+        timers[queueNumber] = setInterval(() => {
+          if (queues[queueNumber]) {
+            if (queues[queueNumber].remainingTime > 0) {
+              queues[queueNumber].remainingTime--;
+              db.ref("queues").set(queues);
+            } else {
+              clearInterval(timers[queueNumber]);
+              removeQueue(queueNumber);
+            }
+          } else {
+            clearInterval(timers[queueNumber]);
+          }
+        }, 1000);
+      });
     }
 
     db.ref("queues").on("value", snapshot => {
@@ -286,6 +303,7 @@
       usedQueueNumbers.clear();
       Object.keys(queues).forEach(q => usedQueueNumbers.add(Number(q)));
       updateQueues();
+      startTimerForAllQueues();
     });
   </script>
 </body>
