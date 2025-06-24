@@ -180,14 +180,16 @@
       return `${m} นาที ${s} วินาที`;
     }
 
-    // ✅ เวอร์ชันใหม่ที่คำนวณเวลารอโดยดูจากจำนวนพนักงาน
+    // ✅ เวอร์ชันที่ให้คิว 1–s รอ baseWaitTime, ถัดไปค่อยสะสมเพิ่ม
     function calculateWaitTimes(queueNumbers, baseWaitTime, s) {
       let waitTimes = {};
       const sortedQueues = [...queueNumbers].sort((a, b) => a - b);
-      const workerTimes = Array(s).fill(0); // เวลาว่างของพนักงานแต่ละคน
+      let workerTimes = Array(s).fill(baseWaitTime); // เริ่มจาก baseWaitTime
 
       for (let i = 0; i < sortedQueues.length; i++) {
         const q = sortedQueues[i];
+
+        // หาพนักงานที่ว่างเร็วที่สุด
         let minIndex = 0;
         for (let j = 1; j < s; j++) {
           if (workerTimes[j] < workerTimes[minIndex]) {
@@ -195,8 +197,8 @@
           }
         }
 
-        waitTimes[q] = workerTimes[minIndex];
-        workerTimes[minIndex] += baseWaitTime;
+        waitTimes[q] = workerTimes[minIndex]; // เวลาที่ลูกค้าคนนี้รอ
+        workerTimes[minIndex] += baseWaitTime; // เพิ่มเวลาให้พนักงานคนนั้น
       }
 
       return waitTimes;
