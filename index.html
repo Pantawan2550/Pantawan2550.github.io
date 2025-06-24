@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -122,6 +121,7 @@
     <div class="queue-container" id="queues"></div>
     <div class="current-queue-count" id="queueCount"></div>
   </div>
+
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
   <script>
@@ -132,26 +132,29 @@
       projectId: "queue-management-system-79b27",
       storageBucket: "queue-management-system-79b27.appspot.com",
       messagingSenderId: "76344006886",
-      appId: "1:76344006886:web:a93cdee9adf70b43e30327",
-      measurementId: "G-F1R4Q52535"
+      appId: "1:76344006886:web:a93cdee9adf70b43e30327"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     let queues = {};
     const usedQueueNumbers = new Set();
+
     setInterval(() => {
       document.getElementById("clock").textContent =
         `เวลา: ${new Date().toLocaleTimeString("th-TH", { hour12: false })}`;
     }, 1000);
+
     function showNotification(message) {
       const note = document.getElementById("notification");
       note.textContent = message;
       note.style.display = "block";
       setTimeout(() => (note.style.display = "none"), 4000);
     }
+
     function factorial(n) {
       return n <= 1 ? 1 : n * factorial(n - 1);
     }
+
     function calculateMMS(lambda, mu, s) {
       const ρ = lambda / (s * mu);
       if (ρ >= 1) return null;
@@ -163,40 +166,44 @@
       const P0 = 1 / (sum + lastTerm);
       const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
       const Wq = Lq / lambda;
-      return Wq * 60; // seconds
+      return Wq * 60;
     }
+
     function formatTime(seconds) {
       const m = Math.floor(seconds / 60);
       const s = seconds % 60;
       return `${m} นาที ${s} วินาที`;
     }
+
     function calculateWaitTimes(queueNumbers, baseWaitTime, s) {
-      let waitTimes = {};
-      const sortedQueues = [...queueNumbers].sort((a, b) => a - b);
-      for (let i = 0; i < sortedQueues.length; i++) {
-        const q = sortedQueues[i];
+      const waitTimes = {};
+      const sorted = [...queueNumbers].sort((a, b) => a - b);
+      const firstS = sorted.slice(0, s);
+      const minFirstS = Math.min(...firstS.map(q => queues[q]?.remainingTime || baseWaitTime));
+
+      for (let i = 0; i < sorted.length; i++) {
+        const q = sorted[i];
         const pos = i + 1;
-        if (pos <= s) {
+        if (queues[q]) {
+          waitTimes[q] = queues[q].remainingTime;
+        } else if (pos <= s) {
           waitTimes[q] = baseWaitTime;
+        } else if (pos <= 2 * s) {
+          waitTimes[q] = baseWaitTime + minFirstS;
         } else {
-          const indexInCycle = (pos - 1) % s;
-          if (indexInCycle === 0) {
-            const minTime = Math.min(...Object.values(waitTimes));
-            waitTimes[q] = minTime + baseWaitTime;
-          } else {
-            const indexOfStart = i - indexInCycle;
-            const startQueue = sortedQueues[indexOfStart];
-            waitTimes[q] = waitTimes[startQueue];
-          }
+          const recent = sorted.slice(i - s, i);
+          waitTimes[q] = recent.reduce((sum, qn) => sum + waitTimes[qn], 0);
         }
       }
       return waitTimes;
     }
+
     function addQueue() {
       const queueNumber = parseInt(document.getElementById("queueNumber").value);
       const lambda = parseFloat(document.getElementById("lambda").value);
       const mu = parseFloat(document.getElementById("mu").value);
       const s = parseInt(document.getElementById("servers").value);
+
       if (isNaN(queueNumber) || queueNumber < 1 || usedQueueNumbers.has(queueNumber)) {
         showNotification("หมายเลขคิวซ้ำหรือไม่ถูกต้อง");
         return;
@@ -205,47 +212,50 @@
         showNotification("โปรดกรอกค่าถูกต้องทั้งหมด");
         return;
       }
+
       const baseWaitTime = calculateMMS(lambda, mu, s);
       if (baseWaitTime === null) {
         showNotification("ระบบเกินความสามารถ (λ ≥ sμ)");
         return;
       }
+
       const allQueueNumbers = [...Object.keys(queues).map(Number), queueNumber];
       const newWaitTimes = calculateWaitTimes(allQueueNumbers, Math.ceil(baseWaitTime), s);
-      queues = {};
-      usedQueueNumbers.clear();
-      for (const qNum of allQueueNumbers) {
-        queues[qNum] = { remainingTime: newWaitTimes[qNum] };
-        usedQueueNumbers.add(qNum);
-      }
-      db.ref("queues").set(queues);
-      showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(queues[queueNumber].remainingTime)})`);
-      const interval = setInterval(() => {
-        if (queues[queueNumber]) {
-          if (queues[queueNumber].remainingTime > 0) {
-            queues[queueNumber].remainingTime--;
-            db.ref("queues").set(queues);
+
+      if (!queues[queueNumber]) {
+        queues[queueNumber] = { remainingTime: newWaitTimes[queueNumber] };
+        usedQueueNumbers.add(queueNumber);
+
+        db.ref("queues").set(queues);
+        showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(queues[queueNumber].remainingTime)})`);
+
+        const interval = setInterval(() => {
+          if (queues[queueNumber]) {
+            if (queues[queueNumber].remainingTime > 0) {
+              queues[queueNumber].remainingTime--;
+              db.ref("queues").set(queues);
+            } else {
+              clearInterval(interval);
+              removeQueue(queueNumber);
+            }
           } else {
             clearInterval(interval);
-            removeQueue(queueNumber);
           }
-        } else {
-          clearInterval(interval);
-        }
-      }, 1000);
+        }, 1000);
+      }
     }
+
     function removeQueue(queueNumber) {
       delete queues[queueNumber];
-      usedQueueNumbers.delete(Number(queueNumber));
+      usedQueueNumbers.delete(queueNumber);
       db.ref("queues").set(queues);
       showNotification(`คิว ${queueNumber} เสร็จสิ้น`);
     }
+
     function updateQueues() {
       const container = document.getElementById("queues");
       container.innerHTML = "";
-      Object.keys(queues)
-        .sort((a, b) => Number(a) - Number(b))
-        .forEach(queueNumber => {
+      Object.keys(queues).sort((a, b) => Number(a) - Number(b)).forEach(queueNumber => {
         const t = queues[queueNumber];
         const div = document.createElement("div");
         div.classList.add("queue-box");
@@ -259,6 +269,7 @@
       document.getElementById("queueCount").textContent =
         `จำนวนคิวที่กำลังให้บริการ: ${Object.keys(queues).length}`;
     }
+
     db.ref("queues").on("value", snapshot => {
       queues = snapshot.val() || {};
       usedQueueNumbers.clear();
