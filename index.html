@@ -208,10 +208,10 @@
     }
 
     function addQueue() {
-      const queueNumber = parseInt(document.getElementById("queueNumber").value);
-      const lambda = parseFloat(document.getElementById("lambda").value);
-      const mu = parseFloat(document.getElementById("mu").value);
-      const s = parseInt(document.getElementById("servers").value);
+    const queueNumber = parseInt(document.getElementById("queueNumber").value);
+    const lambda = parseFloat(document.getElementById("lambda").value);
+    const mu = parseFloat(document.getElementById("mu").value);
+    const s = parseInt(document.getElementById("servers").value);
 
       if (isNaN(queueNumber) || queueNumber < 1 || usedQueueNumbers.has(queueNumber)) {
         showNotification("หมายเลขคิวซ้ำหรือไม่ถูกต้อง");
