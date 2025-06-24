@@ -99,11 +99,11 @@
 
     <div class="queue-group">
       <div class="input-item">
-        <label for="lambda">\u03bb (ลูกค้ามาถึง/นาที):</label>
+        <label for="lambda">λ (ลูกค้ามาถึง/นาที):</label>
         <input type="number" id="lambda" step="any" placeholder="เช่น 2" />
       </div>
       <div class="input-item">
-        <label for="mu">\u03bc (บริการ/นาที):</label>
+        <label for="mu">μ (บริการ/นาที):</label>
         <input type="number" id="mu" step="any" placeholder="เช่น 3" />
       </div>
       <div class="input-item">
@@ -135,7 +135,8 @@
       projectId: "queue-management-system-79b27",
       storageBucket: "queue-management-system-79b27.appspot.com",
       messagingSenderId: "76344006886",
-      appId: "1:76344006886:web:a93cdee9adf70b43e30327"
+      appId: "1:76344006886:web:a93cdee9adf70b43e30327",
+      measurementId: "G-F1R4Q52535"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -179,20 +180,26 @@
       return `${m} นาที ${s} วินาที`;
     }
 
-    function calculateWaitTimes(queueNumbers, baseWaitTime, s) {
+    function calculateWaitTimes(queueNumbers, baseWaitTime, s, existingQueues) {
       let waitTimes = {};
       const sortedQueues = [...queueNumbers].sort((a, b) => a - b);
-      let workerTimes = Array(s).fill(baseWaitTime);
+      let workerTimes = Array(s).fill(0);
 
-      for (let i = 0; i < sortedQueues.length; i++) {
-        const q = sortedQueues[i];
+      for (let q of sortedQueues) {
+        const prevWait = existingQueues[q]?.remainingTime || 0;
+
+        // หาพนักงานที่เวลาน้อยที่สุด
         let minIndex = 0;
         for (let j = 1; j < s; j++) {
           if (workerTimes[j] < workerTimes[minIndex]) {
             minIndex = j;
           }
         }
-        waitTimes[q] = workerTimes[minIndex];
+
+        // เวลารอใหม่ = เวลาที่พนักงานมี + เวลารอเดิมของคิว
+        waitTimes[q] = workerTimes[minIndex] + prevWait;
+
+        // เพิ่มเวลารอฐานไปที่พนักงานคนนี้
         workerTimes[minIndex] += baseWaitTime;
       }
 
@@ -221,29 +228,34 @@
       }
 
       const allQueueNumbers = [...Object.keys(queues).map(Number), queueNumber];
-      const newWaitTimes = calculateWaitTimes(allQueueNumbers, Math.ceil(baseWaitTime), s);
+      const newWaitTimes = calculateWaitTimes(allQueueNumbers, Math.ceil(baseWaitTime), s, queues);
 
-      if (!queues[queueNumber]) {
-        queues[queueNumber] = { remainingTime: newWaitTimes[queueNumber] };
-        usedQueueNumbers.add(queueNumber);
+      for (const qNum of allQueueNumbers) {
+        if (queues[qNum]) {
+          // เก็บเวลาที่เหลือจริงไว้ ถ้าเวลาคำนวณใหม่มากกว่าก็ใช้เวลาคำนวณใหม่ (อาจเกิดกรณีเวลาหมดแล้วเพิ่มใหม่)
+          queues[qNum].remainingTime = Math.max(queues[qNum].remainingTime, newWaitTimes[qNum]);
+        } else {
+          queues[qNum] = { remainingTime: newWaitTimes[qNum] };
+          usedQueueNumbers.add(qNum);
+        }
+      }
 
-        db.ref("queues").set(queues);
-        showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(queues[queueNumber].remainingTime)})`);
+      db.ref("queues").set(queues);
+      showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(queues[queueNumber].remainingTime)})`);
 
-        const interval = setInterval(() => {
-          if (queues[queueNumber]) {
-            if (queues[queueNumber].remainingTime > 0) {
-              queues[queueNumber].remainingTime--;
-              db.ref("queues").set(queues);
-            } else {
-              clearInterval(interval);
-              removeQueue(queueNumber);
-            }
+      const interval = setInterval(() => {
+        if (queues[queueNumber]) {
+          if (queues[queueNumber].remainingTime > 0) {
+            queues[queueNumber].remainingTime--;
+            db.ref("queues").set(queues);
           } else {
             clearInterval(interval);
+            removeQueue(queueNumber);
           }
-        }, 1000);
-      }
+        } else {
+          clearInterval(interval);
+        }
+      }, 1000);
     }
 
     function removeQueue(queueNumber) {
