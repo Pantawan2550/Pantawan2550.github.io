@@ -171,7 +171,7 @@
       const P0 = 1 / (sum + lastTerm);
       const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
       const Wq = Lq / lambda;
-      return Wq * 60; // seconds
+      return Wq * 60; // วินาที
     }
 
     function formatTime(seconds) {
@@ -180,28 +180,25 @@
       return `${m} นาที ${s} วินาที`;
     }
 
+    // ✅ เวอร์ชันใหม่ที่คำนวณเวลารอโดยดูจากจำนวนพนักงาน
     function calculateWaitTimes(queueNumbers, baseWaitTime, s) {
       let waitTimes = {};
       const sortedQueues = [...queueNumbers].sort((a, b) => a - b);
+      const workerTimes = Array(s).fill(0); // เวลาว่างของพนักงานแต่ละคน
 
       for (let i = 0; i < sortedQueues.length; i++) {
         const q = sortedQueues[i];
-        const pos = i + 1;
-
-        if (pos <= s) {
-          waitTimes[q] = baseWaitTime;
-        } else {
-          const indexInCycle = (pos - 1) % s;
-          if (indexInCycle === 0) {
-            const minTime = Math.min(...Object.values(waitTimes));
-            waitTimes[q] = minTime + baseWaitTime;
-          } else {
-            const indexOfStart = i - indexInCycle;
-            const startQueue = sortedQueues[indexOfStart];
-            waitTimes[q] = waitTimes[startQueue];
+        let minIndex = 0;
+        for (let j = 1; j < s; j++) {
+          if (workerTimes[j] < workerTimes[minIndex]) {
+            minIndex = j;
           }
         }
+
+        waitTimes[q] = workerTimes[minIndex];
+        workerTimes[minIndex] += baseWaitTime;
       }
+
       return waitTimes;
     }
 
