@@ -36,6 +36,18 @@
     a:hover {
       text-decoration: underline;
     }
+    .clear-btn {
+      margin-top: 15px;
+      background-color: #dc3545;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .clear-btn:hover {
+      background-color: #c82333;
+    }
   </style>
 </head>
 <body>
@@ -50,6 +62,9 @@
     </thead>
     <tbody id="historyTable"></tbody>
   </table>
+
+  <button class="clear-btn" onclick="clearHistory()">ล้างข้อมูลประวัติ</button>
+  <br />
   <a href="index.html">← กลับไปหน้าหลัก</a>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -68,6 +83,7 @@
     const db = firebase.database();
 
     const table = document.getElementById("historyTable");
+
     db.ref("history").on("value", snapshot => {
       const data = snapshot.val() || {};
       table.innerHTML = "";
@@ -84,6 +100,18 @@
         table.appendChild(row);
       });
     });
+
+    function clearHistory() {
+      if (confirm("คุณแน่ใจหรือไม่ว่าต้องการล้างข้อมูลประวัติทั้งหมด?")) {
+        db.ref("history").remove()
+          .then(() => {
+            alert("ล้างข้อมูลประวัติเรียบร้อยแล้ว");
+          })
+          .catch(error => {
+            alert("เกิดข้อผิดพลาด: " + error.message);
+          });
+      }
+    }
   </script>
 </body>
 </html>
