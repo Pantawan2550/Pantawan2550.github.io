@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ระบบจัดการคิวแบบเรียลไทม์ (พ่อค้าแม่ค้า)</title>
+  <title>ระบบจัดการคิว (พ่อค้าแม่ค้า)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -176,7 +176,7 @@
       const P0 = 1 / (sum + lastTerm);
       const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
       const Wq = Lq / lambda;
-      return Wq * 60; // seconds
+      return Wq * 60;
     }
 
     function formatTime(seconds) {
@@ -237,6 +237,7 @@
       usedQueueNumbers.add(queueNumber);
 
       db.ref("queues").set(queues);
+      startTimerForAllQueues(); // ✅ เริ่มนับทันที
       showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(queues[queueNumber].remainingTime)})`);
     }
 
@@ -260,7 +261,11 @@
       const container = document.getElementById("queues");
       container.innerHTML = "";
       Object.entries(queues)
-        .sort((a, b) => new Date(`1970-01-01T${a[1].entryTime}`) - new Date(`1970-01-01T${b[1].entryTime}`))
+        .sort((a, b) => {
+          const t1 = a[1].entryTime;
+          const t2 = b[1].entryTime;
+          return new Date(`1970-01-01T${t1}`) - new Date(`1970-01-01T${t2}`);
+        })
         .forEach(([queueNumber, t]) => {
           const div = document.createElement("div");
           div.classList.add("queue-box");
