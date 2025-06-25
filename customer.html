@@ -44,31 +44,41 @@
       background-color: #e6a9c9;
     }
 
+    #searchInput {
+      margin-bottom: 20px;
+      padding: 6px 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      width: 80%;
+      max-width: 300px;
+    }
+
     #queues {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 15px;
-      
-    }.queue-box {
-  /* border: 2px solid #333; ← ลบหรือคอมเมนต์ออก */
-  border: none; /* ✅ เพิ่มบรรทัดนี้แทน */
-  padding: 15px;
-  border-radius: 10px;
-  background-color: #d4edda;
-  width: 30%;
-  min-width: 120px;
-  max-width: 180px;
-  box-sizing: border-box;
-  text-align: center;
-  font-weight: bold;
-}
+    }
+
+    .queue-box {
+      border: none;
+      padding: 15px;
+      border-radius: 10px;
+      background-color: #d4edda;
+      width: 30%;
+      min-width: 120px;
+      max-width: 180px;
+      box-sizing: border-box;
+      text-align: center;
+      font-weight: bold;
+    }
 
     .queue-label {
       display: inline-block;
       background-color: #a2cffe;
       border: 2px solid #6fa8dc;
-      color:  #2c3e91 ;
+      color: #2c3e91;
       padding: 4px 10px;
       border-radius: 8px;
       font-size: 16px;
@@ -78,7 +88,7 @@
     #clock {
       font-size: 18px;
       color: #555;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
     }
 
     @media (max-width: 600px) {
@@ -101,6 +111,15 @@
     </a>
 
     <div id="clock"></div>
+
+    <!-- 🔍 ช่องค้นหาหมายเลขคิว -->
+    <input
+      type="number"
+      id="searchInput"
+      placeholder="ค้นหาหมายเลขคิว..."
+      oninput="filterQueues()"
+    />
+
     <div id="queues"></div>
   </div>
 
@@ -139,6 +158,20 @@
           <p>เหลือเวลา: ${formatTime(t.remainingTime)}</p>
         `;
         container.appendChild(div);
+      });
+      filterQueues(); // เรียกกรองหลังอัปเดตคิว
+    }
+
+    function filterQueues() {
+      const keyword = document.getElementById("searchInput").value.trim();
+      const allQueueBoxes = document.querySelectorAll(".queue-box");
+      allQueueBoxes.forEach(box => {
+        const label = box.querySelector(".queue-label").textContent;
+        if (keyword === "" || label.includes(keyword)) {
+          box.style.display = "block";
+        } else {
+          box.style.display = "none";
+        }
       });
     }
 
