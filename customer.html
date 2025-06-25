@@ -49,20 +49,20 @@
       flex-wrap: wrap;
       justify-content: center;
       gap: 15px;
-    }
-
-    .queue-box {
-      border: 2px solid #333;
-      padding: 15px;
-      border-radius: 10px;
-      background-color: #d4edda;
-      width: 30%;
-      min-width: 120px;
-      max-width: 180px;
-      box-sizing: border-box;
-      text-align: center;
-      font-weight: bold;
-    }
+      
+    }.queue-box {
+  /* border: 2px solid #333; ← ลบหรือคอมเมนต์ออก */
+  border: none; /* ✅ เพิ่มบรรทัดนี้แทน */
+  padding: 15px;
+  border-radius: 10px;
+  background-color: #d4edda;
+  width: 30%;
+  min-width: 120px;
+  max-width: 180px;
+  box-sizing: border-box;
+  text-align: center;
+  font-weight: bold;
+}
 
     .queue-label {
       display: inline-block;
