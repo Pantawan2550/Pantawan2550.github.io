@@ -188,11 +188,9 @@
     function calculateWaitTimes(queueNumbers, baseWaitTime, s) {
       let waitTimes = {};
       const sortedQueues = [...queueNumbers].sort((a, b) => a - b);
-
       for (let i = 0; i < sortedQueues.length; i++) {
         const q = sortedQueues[i];
         const pos = i + 1;
-
         if (pos <= s) {
           waitTimes[q] = baseWaitTime;
         } else {
@@ -205,7 +203,6 @@
           waitTimes[q] = baseWaitTime + minPrev;
         }
       }
-
       return waitTimes;
     }
 
@@ -262,10 +259,9 @@
     function updateQueues() {
       const container = document.getElementById("queues");
       container.innerHTML = "";
-      Object.keys(queues)
-        .sort((a, b) => Number(a) - Number(b))
-        .forEach(queueNumber => {
-          const t = queues[queueNumber];
+      Object.entries(queues)
+        .sort((a, b) => new Date(`1970-01-01T${a[1].entryTime}`) - new Date(`1970-01-01T${b[1].entryTime}`))
+        .forEach(([queueNumber, t]) => {
           const div = document.createElement("div");
           div.classList.add("queue-box");
           div.innerHTML = `
@@ -281,7 +277,7 @@
 
     function startTimerForAllQueues() {
       Object.keys(queues).forEach(queueNumber => {
-        if (timers[queueNumber]) return; // ป้องกันไม่ให้สร้าง interval ซ้ำ
+        if (timers[queueNumber]) return;
         timers[queueNumber] = setInterval(() => {
           if (queues[queueNumber]) {
             if (queues[queueNumber].remainingTime > 0) {
