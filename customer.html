@@ -26,22 +26,22 @@
       margin-bottom: 10px;
     }
 
-  .form-link {
-  display: inline-block;
-  margin-bottom: 20px;
-  padding: 6px 14px;
-  background-color: #f8c8dc; /* ชมพูพาสเทล */
-  color: #7a3e5a; /* สีข้อความเข้ม */
-  text-decoration: none;
-  border-radius: 5px;
-  font-size: 14px; /* เล็กลง */
-  font-weight: 600;
-  transition: background-color 0.3s ease;
-}
+    .form-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      padding: 6px 14px;
+      background-color: #f8c8dc; /* ชมพูพาสเทล */
+      color: #7a3e5a; /* สีข้อความเข้ม */
+      text-decoration: none;
+      border-radius: 5px;
+      font-size: 14px; /* เล็กลง */
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+    }
 
-.form-link:hover {
-  background-color: #e6a9c9; /* ชมพูเข้มขึ้นเวลาชี้ */
-}
+    .form-link:hover {
+      background-color: #e6a9c9; /* ชมพูเข้มขึ้นเวลาชี้ */
+    }
 
     #queues {
       display: flex;
@@ -124,7 +124,7 @@
         const div = document.createElement("div");
         div.classList.add("queue-box");
         div.innerHTML = `
-          <p>คิว ${queueNumber}</p>
+          <p><span style="color: red;">คิว</span> ${queueNumber}</p>
           <p>เหลือเวลา: ${formatTime(t.remainingTime)}</p>
         `;
         container.appendChild(div);
