@@ -229,19 +229,23 @@
       const allQueueNumbers = [...Object.keys(queues).map(Number), queueNumber];
       const newWaitTimes = calculateWaitTimes(allQueueNumbers, Math.ceil(baseWaitTime), s);
 
+      const now = Date.now();
       queues[queueNumber] = {
         waitTime: newWaitTimes[queueNumber],
-        entryTimestamp: Date.now()
+        entryTimestamp: now
       };
       usedQueueNumbers.add(queueNumber);
 
       db.ref("queues").set(queues);
-      showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(queues[queueNumber].waitTime)})`);
+      showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(newWaitTimes[queueNumber])})`);
     }
 
     function removeQueue(queueNumber) {
+      const data = queues[queueNumber];
+      if (!data) return;
+
+      const entryTime = new Date(data.entryTimestamp).toLocaleTimeString("th-TH", { hour12: false });
       const exitTime = new Date().toLocaleTimeString("th-TH", { hour12: false });
-      const entryTime = new Date(queues[queueNumber].entryTimestamp).toLocaleTimeString("th-TH", { hour12: false });
 
       db.ref("history").push({
         queueNumber: queueNumber,
@@ -258,23 +262,25 @@
     function updateQueues() {
       const container = document.getElementById("queues");
       container.innerHTML = "";
-      const now = Date.now();
+      Object.entries(queues).forEach(([queueNumber, data]) => {
+        const now = Date.now();
+        const elapsed = Math.floor((now - data.entryTimestamp) / 1000);
+        const remaining = Math.max(0, data.waitTime - elapsed);
 
-      Object.entries(queues)
-        .sort((a, b) => queues[a[0]].entryTimestamp - queues[b[0]].entryTimestamp)
-        .forEach(([queueNumber, data]) => {
-          const elapsed = Math.floor((now - data.entryTimestamp) / 1000);
-          const remaining = Math.max(0, data.waitTime - elapsed);
+        if (remaining <= 0) {
+          removeQueue(queueNumber);
+          return;
+        }
 
-          const div = document.createElement("div");
-          div.classList.add("queue-box");
-          div.innerHTML = `
-            <p>คิว ${queueNumber}</p>
-            <p>เหลือเวลา: ${formatTime(remaining)}</p>
-            ${remaining === 0 ? `<button class="remove-btn" onclick="removeQueue(${queueNumber})">เสร็จ</button>` : ""}
-          `;
-          container.appendChild(div);
-        });
+        const div = document.createElement("div");
+        div.classList.add("queue-box");
+        div.innerHTML = `
+          <p>คิว ${queueNumber}</p>
+          <p>เหลือเวลา: ${formatTime(remaining)}</p>
+          <button class="remove-btn" onclick="removeQueue(${queueNumber})">เสร็จ</button>
+        `;
+        container.appendChild(div);
+      });
 
       document.getElementById("queueCount").textContent =
         `จำนวนคิวที่กำลังให้บริการ: ${Object.keys(queues).length}`;
