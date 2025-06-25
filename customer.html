@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -26,22 +27,22 @@
       margin-bottom: 10px;
     }
 
-    .form-link {
-      display: inline-block;
-      margin-bottom: 20px;
-      padding: 6px 14px;
-      background-color: #f8c8dc;
-      color: #7a3e5a;
-      text-decoration: none;
-      border-radius: 5px;
-      font-size: 14px;
-      font-weight: 600;
-      transition: background-color 0.3s ease;
-    }
+  .form-link {
+  display: inline-block;
+  margin-bottom: 20px;
+  padding: 6px 14px;
+  background-color: #f8c8dc; /* ชมพูพาสเทล */
+  color: #7a3e5a; /* สีข้อความเข้ม */
+  text-decoration: none;
+  border-radius: 5px;
+  font-size: 14px; /* เล็กลง */
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
 
-    .form-link:hover {
-      background-color: #e6a9c9;
-    }
+.form-link:hover {
+  background-color: #e6a9c9; /* ชมพูเข้มขึ้นเวลาชี้ */
+}
 
     #queues {
       display: flex;
@@ -63,17 +64,6 @@
       font-weight: bold;
     }
 
-    .queue-label {
-      display: inline-block;
-      background-color: #a2cffe;
-      border: 2px solid #6fa8dc;
-      color: white;
-      padding: 4px 10px;
-      border-radius: 8px;
-      font-size: 16px;
-      margin-bottom: 8px;
-    }
-
     #clock {
       font-size: 18px;
       color: #555;
@@ -91,12 +81,13 @@
   <div class="container">
     <h2>ระบบจัดการคิว (ลูกค้า)</h2>
 
+    <!-- 🔗 ลิงก์ไป Google Form -->
     <a
       class="form-link"
       href="https://docs.google.com/forms/d/e/1FAIpQLSfELyawHnuL0YsrUO5CJWxqedZgAwmPmms-MjrOrS2N2yBXZg/viewform?usp=sf_link"
       target="_blank"
     >
-      ♥แบบประเมินความพึงพอใจ♥
+       ♥แบบประเมินความพึงพอใจ♥
     </a>
 
     <div id="clock"></div>
@@ -134,7 +125,7 @@
         const div = document.createElement("div");
         div.classList.add("queue-box");
         div.innerHTML = `
-          <div class="queue-label">คิวที่ ${queueNumber}</div>
+          <p>คิว ${queueNumber}</p>
           <p>เหลือเวลา: ${formatTime(t.remainingTime)}</p>
         `;
         container.appendChild(div);
@@ -148,8 +139,9 @@
 
     setInterval(() => {
       document.getElementById("clock").textContent =
-        \`เวลา: \${new Date().toLocaleTimeString("th-TH", { hour12: false })}\`;
+        `เวลา: ${new Date().toLocaleTimeString("th-TH", { hour12: false })}`;
     }, 1000);
   </script>
 </body>
 </html>
+
