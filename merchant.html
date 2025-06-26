@@ -52,13 +52,30 @@
     }
     .queue-box {
       border: 2px solid #333;
-      padding: 15px;
+      padding: 15px 10px 60px;
       border-radius: 10px;
       background-color: #d4edda;
-      width: 120px;
+      width: 140px;
+      min-height: 180px;
       text-align: center;
       font-weight: bold;
       position: relative;
+    }
+    .cheese-btn {
+      background-color: #ffc107;
+      color: black;
+      border: none;
+      padding: 5px;
+      border-radius: 5px;
+      cursor: pointer;
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+    }
+    .cheese-btn:hover {
+      background-color: #e0a800;
     }
     .remove-btn {
       background-color: #dc3545;
@@ -71,25 +88,11 @@
       bottom: 5px;
       left: 50%;
       transform: translateX(-50%);
+      width: 80%;
     }
-    .remove-btn:hover { background-color: #c82333; }
-
-    .cheese-btn {
-      background-color: #ffc107;
-      color: black;
-      border: none;
-      padding: 5px;
-      border-radius: 5px;
-      cursor: pointer;
-      position: absolute;
-      bottom: 35px;
-      left: 50%;
-      transform: translateX(-50%);
+    .remove-btn:hover {
+      background-color: #c82333;
     }
-    .cheese-btn:hover {
-      background-color: #e0a800;
-    }
-
     .notification {
       margin-top: 15px;
       padding: 10px;
@@ -121,7 +124,7 @@
       </div>
       <div class="input-item">
         <label for="mu">μ (บริการ/นาที):</label>
-        <input type="number" id="mu" step="any" value="0.84" />
+        <input type="number" id="mu" step="any" value="0.82" />
       </div>
       <div class="input-item">
         <label for="servers">จำนวนพนักงาน (s):</label>
