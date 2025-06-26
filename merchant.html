@@ -73,6 +73,23 @@
       transform: translateX(-50%);
     }
     .remove-btn:hover { background-color: #c82333; }
+
+    .cheese-btn {
+      background-color: #ffc107;
+      color: black;
+      border: none;
+      padding: 5px;
+      border-radius: 5px;
+      cursor: pointer;
+      position: absolute;
+      bottom: 35px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .cheese-btn:hover {
+      background-color: #e0a800;
+    }
+
     .notification {
       margin-top: 15px;
       padding: 10px;
@@ -104,7 +121,7 @@
       </div>
       <div class="input-item">
         <label for="mu">μ (บริการ/นาที):</label>
-        <input type="number" id="mu" step="any" value="0.82" />
+        <input type="number" id="mu" step="any" value="0.79" />
       </div>
       <div class="input-item">
         <label for="servers">จำนวนพนักงาน (s):</label>
@@ -259,6 +276,13 @@
       showNotification(`คิว ${queueNumber} เสร็จสิ้น`);
     }
 
+    function addCheese(queueNumber) {
+      if (!queues[queueNumber]) return;
+      queues[queueNumber].waitTime += 20;
+      db.ref("queues").set(queues);
+      showNotification(`เพิ่มชีสให้คิว ${queueNumber} (+20 วินาที)`);
+    }
+
     function updateQueues() {
       const container = document.getElementById("queues");
       container.innerHTML = "";
@@ -280,6 +304,7 @@
         div.innerHTML = `
           <p>คิว ${queueNumber}</p>
           ${statusHTML}
+          <button class="cheese-btn" onclick="addCheese(${queueNumber})">เพิ่มชีส</button>
           <button class="remove-btn" onclick="removeQueue(${queueNumber})">เสร็จ</button>
         `;
         container.appendChild(div);
