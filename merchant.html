@@ -267,16 +267,19 @@
         const elapsed = Math.floor((now - data.entryTimestamp) / 1000);
         const remaining = Math.max(0, data.waitTime - elapsed);
 
-        if (remaining <= 0) {
-          removeQueue(queueNumber);
-          return;
-        }
-
         const div = document.createElement("div");
         div.classList.add("queue-box");
+
+        let statusHTML = "";
+        if (remaining <= 0) {
+          statusHTML = `<p style="color: #d63384;">สามารถมารับไข่เจียวได้เลย</p>`;
+        } else {
+          statusHTML = `<p>เหลือเวลา: ${formatTime(remaining)}</p>`;
+        }
+
         div.innerHTML = `
           <p>คิว ${queueNumber}</p>
-          <p>เหลือเวลา: ${formatTime(remaining)}</p>
+          ${statusHTML}
           <button class="remove-btn" onclick="removeQueue(${queueNumber})">เสร็จ</button>
         `;
         container.appendChild(div);
