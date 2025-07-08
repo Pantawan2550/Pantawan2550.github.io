@@ -167,20 +167,23 @@
     function calculateMMS(lambda, mu, s) {
       const ρ = lambda / (s * mu);
       if (ρ >= 1) return null;
+
       let sum = 0;
       for (let k = 0; k < s; k++) {
         sum += Math.pow(lambda / mu, k) / factorial(k);
       }
       const lastTerm = Math.pow(lambda / mu, s) / (factorial(s) * (1 - ρ));
       const P0 = 1 / (sum + lastTerm);
+
       const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
       const Wq = Lq / lambda;
-      return Wq * 60;
+      const W = Wq + (1 / mu); // ✅ เปลี่ยนให้ใช้ W (เวลาเฉลี่ยในระบบ)
+      return W * 60; // แปลงเป็นวินาที
     }
 
     function formatTime(seconds) {
       const m = Math.floor(seconds / 60);
-      const s = seconds % 60;
+      const s = Math.floor(seconds % 60);
       return `${m} นาที ${s} วินาที`;
     }
 
