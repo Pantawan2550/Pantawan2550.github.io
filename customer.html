@@ -106,7 +106,7 @@
       href="https://docs.google.com/forms/d/e/1FAIpQLSfELyawHnuL0YsrUO5CJWxqedZgAwmPmms-MjrOrS2N2yBXZg/viewform?usp=sf_link"
       target="_blank"
     >
-      ♥แบบประเมินความพึงพอใจ♥
+      ♥ แบบประเมินความพึงพอใจ ♥
     </a>
 
     <div id="clock"></div>
@@ -124,7 +124,9 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
   <script>
+    // === Firebase Config ===
     const firebaseConfig = {
       apiKey: "AIzaSyDNkrcksSvU6H4xYf9h5hvWYgHFYuy4igw",
       authDomain: "queue-management-system-79b27.firebaseapp.com",
@@ -140,18 +142,23 @@
 
     let queues = {};
 
+    // === Format Time ===
     function formatTime(seconds) {
       const m = Math.floor(seconds / 60);
       const s = seconds % 60;
       return `${m} นาที ${s} วินาที`;
     }
 
+    // === Update Queue Display ===
     function updateQueueDisplay() {
       const container = document.getElementById("queues");
       container.innerHTML = "";
 
       const now = Date.now();
+
       Object.entries(queues).forEach(([queueNumber, data]) => {
+        if (!data || typeof data.waitTime !== "number" || typeof data.entryTimestamp !== "number") return;
+
         const elapsed = Math.floor((now - data.entryTimestamp) / 1000);
         const remaining = Math.max(0, data.waitTime - elapsed);
 
@@ -167,6 +174,7 @@
       filterQueues();
     }
 
+    // === Search Function ===
     function filterQueues() {
       const keyword = document.getElementById("searchInput").value.trim();
       const allQueueBoxes = document.querySelectorAll(".queue-box");
@@ -180,11 +188,14 @@
       });
     }
 
+    // === Listen to Firebase Updates ===
     db.ref("queues").on("value", snapshot => {
       queues = snapshot.val() || {};
+      console.log("ข้อมูลจาก Firebase:", queues);
       updateQueueDisplay();
     });
 
+    // === Update Clock and Refresh View ===
     setInterval(() => {
       document.getElementById("clock").textContent =
         `เวลา: ${new Date().toLocaleTimeString("th-TH", { hour12: false })}`;
