@@ -38,7 +38,7 @@
       background-color: #28a745;
       color: white;
       border: none;
-      padding: 10px 15px;
+      padding: 10px 11px;
       border-radius: 5px;
       cursor: pointer;
     }
@@ -262,7 +262,7 @@
       queues[queueNumber].waitTime += 20;
       queues[queueNumber].cheese = true;
       db.ref("queues").set(queues);
-      showNotification(`คิว ${queueNumber} เพิ่มชีส +20 วินาที`);
+      showNotification(`คิว ${queueNumber} เพิ่มชีส 20 วินาที`);
     }
 
     function removeQueue(queueNumber) {
