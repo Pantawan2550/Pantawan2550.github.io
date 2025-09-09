@@ -53,7 +53,7 @@
     }
     .queue-box {
       border: 2px solid #333;
-      padding: 5px;
+      padding: 10px;
       border-radius: 10px;
       background-color: #d4edda;
       width: 130px;
@@ -65,13 +65,6 @@
       flex-direction: column;
       justify-content: space-between;
       align-items: center;
-    }
-    .cheese-container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 2px;
-      font-size: 18px;
     }
     .remove-btn {
       background-color: #dc3545;
@@ -90,7 +83,11 @@
       border-radius: 5px;
       cursor: pointer;
     }
-    .cheese-btn:hover { background-color: #e0a800; }
+    .cheese-btn:disabled {
+      background-color: #ffe699;
+      color: #aaa;
+      cursor: not-allowed;
+    }
     .notification {
       margin-top: 15px;
       padding: 10px;
@@ -178,25 +175,18 @@
       setTimeout(() => (note.style.display = "none"), 4000);
     }
 
-    function factorial(n) {
-      return n <= 1 ? 1 : n * factorial(n - 1);
-    }
+    function factorial(n) { return n <= 1 ? 1 : n * factorial(n - 1); }
 
     function calculateMMS(lambda, mu, s) {
       const ρ = lambda / (s * mu);
       if (ρ >= 1) return null;
-
       let sum = 0;
-      for (let k = 0; k < s; k++) {
-        sum += Math.pow(lambda / mu, k) / factorial(k);
-      }
+      for (let k = 0; k < s; k++) sum += Math.pow(lambda / mu, k) / factorial(k);
       const lastTerm = Math.pow(lambda / mu, s) / (factorial(s) * (1 - ρ));
       const P0 = 1 / (sum + lastTerm);
-
       const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
       const Wq = Lq / lambda;
-      const W = Wq + (1 / mu);
-      return W * 60;
+      return (Wq + 1 / mu) * 60;
     }
 
     function formatTime(seconds) {
@@ -211,16 +201,14 @@
       for (let i = 0; i < sortedQueues.length; i++) {
         const q = sortedQueues[i];
         const pos = i + 1;
-        if (pos <= s) {
-          waitTimes[q] = baseWaitTime;
-        } else {
+        if (pos <= s) waitTimes[q] = baseWaitTime;
+        else {
           const groupIndex = Math.floor((pos - 1) / s);
           const prevStart = (groupIndex - 1) * s;
           const prevEnd = groupIndex * s;
           const prevGroup = sortedQueues.slice(prevStart, prevEnd);
           const prevTimes = prevGroup.map(num => waitTimes[num] || 0);
-          const minPrev = Math.min(...prevTimes);
-          waitTimes[q] = baseWaitTime + minPrev;
+          waitTimes[q] = baseWaitTime + Math.min(...prevTimes);
         }
       }
       return waitTimes;
@@ -233,28 +221,20 @@
       const s = parseInt(document.getElementById("servers").value);
 
       if (isNaN(queueNumber) || queueNumber < 1 || usedQueueNumbers.has(queueNumber)) {
-        showNotification("หมายเลขคิวซ้ำหรือไม่ถูกต้อง");
-        return;
+        showNotification("หมายเลขคิวซ้ำหรือไม่ถูกต้อง"); return;
       }
       if (isNaN(lambda) || isNaN(mu) || isNaN(s) || lambda <= 0 || mu <= 0 || s < 1) {
-        showNotification("โปรดกรอกค่าถูกต้องทั้งหมด");
-        return;
+        showNotification("โปรดกรอกค่าถูกต้องทั้งหมด"); return;
       }
 
       const baseWaitTime = calculateMMS(lambda, mu, s);
-      if (baseWaitTime === null) {
-        showNotification("ระบบเกินความสามารถ (λ ≥ sμ)");
-        return;
-      }
+      if (baseWaitTime === null) { showNotification("ระบบเกินความสามารถ (λ ≥ sμ)"); return; }
 
       const allQueueNumbers = [...Object.keys(queues).map(Number), queueNumber];
       const newWaitTimes = calculateWaitTimes(allQueueNumbers, Math.ceil(baseWaitTime), s);
 
       const now = Date.now();
-      queues[queueNumber] = {
-        waitTime: newWaitTimes[queueNumber],
-        entryTimestamp: now
-      };
+      queues[queueNumber] = { waitTime: newWaitTimes[queueNumber], entryTimestamp: now };
       usedQueueNumbers.add(queueNumber);
 
       db.ref("queues").set(queues);
@@ -262,30 +242,22 @@
     }
 
     function removeQueue(queueNumber) {
-      const data = queues[queueNumber];
-      if (!data) return;
-
+      const data = queues[queueNumber]; if (!data) return;
       const entryTime = new Date(data.entryTimestamp).toLocaleTimeString("th-TH", { hour12: false });
       const exitTime = new Date().toLocaleTimeString("th-TH", { hour12: false });
 
-      db.ref("history").push({
-        queueNumber: queueNumber,
-        entryTime: entryTime,
-        exitTime: exitTime
-      });
-
-      delete queues[queueNumber];
-      usedQueueNumbers.delete(Number(queueNumber));
+      db.ref("history").push({ queueNumber, entryTime, exitTime });
+      delete queues[queueNumber]; usedQueueNumbers.delete(Number(queueNumber));
       db.ref("queues").set(queues);
       showNotification(`คิว ${queueNumber} เสร็จสิ้น`);
     }
 
     function addCheese(queueNumber) {
-      const container = document.getElementById(`cheese-${queueNumber}`);
-      if (container) {
-        const cheese = document.createElement("span");
-        cheese.textContent = "🧀";
-        container.appendChild(cheese);
+      if (queues[queueNumber]) {
+        queues[queueNumber].waitTime += 20; // เพิ่มเวลา 20 วิ
+        db.ref("queues").set(queues);
+        const btn = document.getElementById(`cheese-btn-${queueNumber}`);
+        if (btn) btn.disabled = true; // เปลี่ยนสีอ่อน
       }
     }
 
@@ -297,18 +269,14 @@
         const elapsed = Math.floor((now - data.entryTimestamp) / 1000);
         const remaining = Math.max(0, data.waitTime - elapsed);
 
-        if (remaining <= 0) {
-          removeQueue(queueNumber);
-          return;
-        }
+        if (remaining <= 0) { removeQueue(queueNumber); return; }
 
         const div = document.createElement("div");
         div.classList.add("queue-box");
         div.innerHTML = `
           <p>คิว ${queueNumber}</p>
           <p>เหลือเวลา: ${formatTime(remaining)}</p>
-          <div class="cheese-container" id="cheese-${queueNumber}"></div>
-          <button class="cheese-btn" onclick="addCheese(${queueNumber})">ชีส 🧀</button>
+          <button class="cheese-btn" id="cheese-btn-${queueNumber}" onclick="addCheese(${queueNumber})">ชีส 🧀</button>
           <button class="remove-btn" onclick="removeQueue(${queueNumber})">เสร็จ</button>
         `;
         container.appendChild(div);
