@@ -18,7 +18,7 @@
       background: white;
       padding: 20px;
       border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
     .input-group, .queue-group {
       display: flex;
@@ -43,23 +43,6 @@
       cursor: pointer;
     }
     button:hover { background-color: #218838; }
-
-    /* ปุ่มเพิ่มชีส */
-    .cheese-btn {
-      background-color: #ffbf00; /* เหลืองเข้ม */
-      color: #333;
-      border: none;
-      padding: 5px;
-      border-radius: 5px;
-      width: 90%;
-      cursor: pointer;
-    }
-    .cheese-btn:disabled {
-      background-color: #ffe699; /* เหลืองอ่อน */
-      color: #aaa;
-      cursor: not-allowed;
-    }
-
     .queue-container {
       display: flex;
       flex-wrap: wrap;
@@ -75,11 +58,6 @@
       width: 140px;
       text-align: center;
       font-weight: bold;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 5px;
       position: relative;
     }
     .remove-btn {
@@ -90,8 +68,25 @@
       border-radius: 5px;
       cursor: pointer;
       width: 90%;
+      margin-top: 5px;
     }
     .remove-btn:hover { background-color: #c82333; }
+
+    .cheese-btn {
+      background-color: #ffbf00;
+      color: #333;
+      border: none;
+      padding: 5px;
+      border-radius: 5px;
+      width: 90%;
+      cursor: pointer;
+      margin-top: 5px;
+    }
+    .cheese-btn:disabled {
+      background-color: #ffe699;
+      color: #aaa;
+      cursor: not-allowed;
+    }
 
     .notification {
       margin-top: 15px;
@@ -180,157 +175,134 @@
       setTimeout(() => (note.style.display = "none"), 4000);
     }
 
-    function factorial(n) {
-      return n <= 1 ? 1 : n * factorial(n - 1);
-    }
+    function factorial(n) { return n <= 1 ? 1 : n * factorial(n - 1); }
 
     function calculateMMS(lambda, mu, s) {
       const ρ = lambda / (s * mu);
       if (ρ >= 1) return null;
-
       let sum = 0;
-      for (let k = 0; k < s; k++) {
-        sum += Math.pow(lambda / mu, k) / factorial(k);
-      }
-      const lastTerm = Math.pow(lambda / mu, s) / (factorial(s) * (1 - ρ));
-      const P0 = 1 / (sum + lastTerm);
-
-      const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
-      const Wq = Lq / lambda;
-      const W = Wq + (1 / mu);
-      return W * 60;
+      for (let k=0;k<s;k++){ sum += Math.pow(lambda/mu,k)/factorial(k);}
+      const lastTerm = Math.pow(lambda/mu,s)/(factorial(s)*(1-ρ));
+      const P0 = 1/(sum+lastTerm);
+      const Lq = (P0*Math.pow(lambda/mu,s)*ρ)/(factorial(s)*Math.pow(1-ρ,2));
+      const Wq = Lq/lambda;
+      const W = Wq + (1/mu);
+      return W*60;
     }
 
-    function formatTime(seconds) {
-      const m = Math.floor(seconds / 60);
-      const s = Math.floor(seconds % 60);
+    function formatTime(seconds){
+      const m = Math.floor(seconds/60);
+      const s = Math.floor(seconds%60);
       return `${m} นาที ${s} วินาที`;
     }
 
-    function calculateWaitTimes(queueNumbers, baseWaitTime, s) {
+    function calculateWaitTimes(queueNumbers, baseWaitTime, s){
       let waitTimes = {};
-      const sortedQueues = [...queueNumbers].sort((a, b) => a - b);
-      for (let i = 0; i < sortedQueues.length; i++) {
+      const sortedQueues = [...queueNumbers].sort((a,b)=>a-b);
+      for(let i=0;i<sortedQueues.length;i++){
         const q = sortedQueues[i];
-        const pos = i + 1;
-        if (pos <= s) {
-          waitTimes[q] = baseWaitTime;
-        } else {
-          const groupIndex = Math.floor((pos - 1) / s);
-          const prevStart = (groupIndex - 1) * s;
-          const prevEnd = groupIndex * s;
-          const prevGroup = sortedQueues.slice(prevStart, prevEnd);
-          const prevTimes = prevGroup.map(num => waitTimes[num] || 0);
+        const pos = i+1;
+        if(pos<=s){
+          waitTimes[q]=baseWaitTime;
+        }else{
+          const groupIndex = Math.floor((pos-1)/s);
+          const prevStart = (groupIndex-1)*s;
+          const prevEnd = groupIndex*s;
+          const prevGroup = sortedQueues.slice(prevStart,prevEnd);
+          const prevTimes = prevGroup.map(num=>waitTimes[num]||0);
           const minPrev = Math.min(...prevTimes);
-          waitTimes[q] = baseWaitTime + minPrev;
+          waitTimes[q] = baseWaitTime+minPrev;
         }
       }
       return waitTimes;
     }
 
-    function addQueue() {
+    function addQueue(){
       const queueNumber = parseInt(document.getElementById("queueNumber").value);
       const lambda = parseFloat(document.getElementById("lambda").value);
       const mu = parseFloat(document.getElementById("mu").value);
       const s = parseInt(document.getElementById("servers").value);
 
-      if (isNaN(queueNumber) || queueNumber < 1 || usedQueueNumbers.has(queueNumber)) {
-        showNotification("หมายเลขคิวซ้ำหรือไม่ถูกต้อง");
-        return;
+      if(isNaN(queueNumber)||queueNumber<1||usedQueueNumbers.has(queueNumber)){
+        showNotification("หมายเลขคิวซ้ำหรือไม่ถูกต้อง"); return;
       }
-      if (isNaN(lambda) || isNaN(mu) || isNaN(s) || lambda <= 0 || mu <= 0 || s < 1) {
-        showNotification("โปรดกรอกค่าถูกต้องทั้งหมด");
-        return;
+      if(isNaN(lambda)||isNaN(mu)||isNaN(s)||lambda<=0||mu<=0||s<1){
+        showNotification("โปรดกรอกค่าถูกต้องทั้งหมด"); return;
       }
 
-      const baseWaitTime = calculateMMS(lambda, mu, s);
-      if (baseWaitTime === null) {
-        showNotification("ระบบเกินความสามารถ (λ ≥ sμ)");
-        return;
+      const baseWaitTime = calculateMMS(lambda,mu,s);
+      if(baseWaitTime===null){
+        showNotification("ระบบเกินความสามารถ (λ ≥ sμ)"); return;
       }
 
-      const allQueueNumbers = [...Object.keys(queues).map(Number), queueNumber];
-      const newWaitTimes = calculateWaitTimes(allQueueNumbers, Math.ceil(baseWaitTime), s);
+      const allQueueNumbers = [...Object.keys(queues).map(Number),queueNumber];
+      const newWaitTimes = calculateWaitTimes(allQueueNumbers,Math.ceil(baseWaitTime),s);
 
       const now = Date.now();
-      queues[queueNumber] = {
-        waitTime: newWaitTimes[queueNumber],
-        entryTimestamp: now
-      };
+      queues[queueNumber] = { waitTime:newWaitTimes[queueNumber], entryTimestamp: now, cheeseAdded:false };
       usedQueueNumbers.add(queueNumber);
-
       db.ref("queues").set(queues);
+
       showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(newWaitTimes[queueNumber])})`);
     }
 
-    function removeQueue(queueNumber) {
+    function addCheese(queueNumber){
+      if(queues[queueNumber] && !queues[queueNumber].cheeseAdded){
+        queues[queueNumber].waitTime += 20;
+        queues[queueNumber].cheeseAdded = true;
+        db.ref("queues").set(queues);
+
+        const btn = document.getElementById(`cheese-btn-${queueNumber}`);
+        if(btn){ btn.disabled = true; }
+
+        showNotification(`เพิ่มเวลา 20 วิ ให้คิว ${queueNumber}`);
+      }
+    }
+
+    function removeQueue(queueNumber){
       const data = queues[queueNumber];
-      if (!data) return;
-
-      const entryTime = new Date(data.entryTimestamp).toLocaleTimeString("th-TH", { hour12: false });
-      const exitTime = new Date().toLocaleTimeString("th-TH", { hour12: false });
-
-      db.ref("history").push({
-        queueNumber: queueNumber,
-        entryTime: entryTime,
-        exitTime: exitTime
-      });
-
+      if(!data) return;
+      const entryTime = new Date(data.entryTimestamp).toLocaleTimeString("th-TH",{hour12:false});
+      const exitTime = new Date().toLocaleTimeString("th-TH",{hour12:false});
+      db.ref("history").push({queueNumber, entryTime, exitTime});
       delete queues[queueNumber];
       usedQueueNumbers.delete(Number(queueNumber));
       db.ref("queues").set(queues);
       showNotification(`คิว ${queueNumber} เสร็จสิ้น`);
     }
 
-    function addCheese(queueNumber){
-      if(queues[queueNumber]){
-        queues[queueNumber].waitTime += 20; // เพิ่มเวลา 20 วิ
-        db.ref("queues").set(queues);
-
-        const btn = document.getElementById(`cheese-btn-${queueNumber}`);
-        if(btn) btn.disabled = true;
-
-        showNotification(`เพิ่มเวลา 20 วิ ให้คิว ${queueNumber}`);
-      }
-    }
-
     function updateQueues(){
       const container = document.getElementById("queues");
       container.innerHTML = "";
-
-      Object.entries(queues).forEach(([queueNumber, data]) => {
+      Object.entries(queues).forEach(([queueNumber, data])=>{
         const now = Date.now();
-        const elapsed = Math.floor((now - data.entryTimestamp) / 1000);
+        const elapsed = Math.floor((now - data.entryTimestamp)/1000);
         const remaining = Math.max(0, data.waitTime - elapsed);
 
-        if(remaining <= 0){
-          removeQueue(queueNumber);
-          return;
-        }
+        if(remaining <=0){ removeQueue(queueNumber); return; }
 
         const div = document.createElement("div");
         div.classList.add("queue-box");
         div.innerHTML = `
           <p>คิว ${queueNumber}</p>
           <p>เหลือเวลา: ${formatTime(remaining)}</p>
-          <button class="cheese-btn" id="cheese-btn-${queueNumber}" onclick="addCheese(${queueNumber})">เพิ่มชีส</button>
+          <button class="cheese-btn" id="cheese-btn-${queueNumber}" onclick="addCheese(${queueNumber})" ${data.cheeseAdded?'disabled':''}>เพิ่มชีส</button>
           <button class="remove-btn" onclick="removeQueue(${queueNumber})">เสร็จ</button>
         `;
         container.appendChild(div);
       });
-
       document.getElementById("queueCount").textContent =
         `จำนวนคิวที่กำลังให้บริการ: ${Object.keys(queues).length}`;
     }
 
-    db.ref("queues").on("value", snapshot => {
+    db.ref("queues").on("value", snapshot=>{
       queues = snapshot.val() || {};
       usedQueueNumbers.clear();
-      Object.keys(queues).forEach(q => usedQueueNumbers.add(Number(q)));
+      Object.keys(queues).forEach(q=>usedQueueNumbers.add(Number(q)));
       updateQueues();
     });
 
-    setInterval(updateQueues, 1000);
+    setInterval(updateQueues,1000);
   </script>
 </body>
 </html>
