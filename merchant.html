@@ -90,6 +90,20 @@
       margin-bottom: 10px;
       color: #555;
     }
+    /* ปุ่มเพิ่มชีส */
+    .cheese-btn {
+      background: gold;
+      color: black;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .cheese-btn.active {
+      background: orange;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -117,6 +131,7 @@
         <label for="queueNumber">หมายเลขคิว:</label>
         <input type="number" id="queueNumber" min="1" />
       </div>
+      <button id="cheeseBtn" class="cheese-btn" onclick="toggleCheese()">เพิ่มชีส</button>
       <button onclick="addQueue()">เพิ่มคิว</button>
     </div>
 
@@ -147,11 +162,24 @@
 
     let queues = {};
     const usedQueueNumbers = new Set();
+    let cheeseSelected = false;
 
     setInterval(() => {
       document.getElementById("clock").textContent =
         `เวลา: ${new Date().toLocaleTimeString("th-TH", { hour12: false })}`;
     }, 1000);
+
+    function toggleCheese() {
+      cheeseSelected = !cheeseSelected;
+      const btn = document.getElementById("cheeseBtn");
+      if (cheeseSelected) {
+        btn.textContent = "✅ เพิ่มชีส";
+        btn.classList.add("active");
+      } else {
+        btn.textContent = "เพิ่มชีส";
+        btn.classList.remove("active");
+      }
+    }
 
     function showNotification(message) {
       const note = document.getElementById("notification");
@@ -177,8 +205,8 @@
 
       const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
       const Wq = Lq / lambda;
-      const W = Wq + (1 / mu); // ✅ เปลี่ยนให้ใช้ W (เวลาเฉลี่ยในระบบ)
-      return W * 60; // แปลงเป็นวินาที
+      const W = Wq + (1 / mu); 
+      return W * 60; // วินาที
     }
 
     function formatTime(seconds) {
@@ -233,14 +261,27 @@
       const newWaitTimes = calculateWaitTimes(allQueueNumbers, Math.ceil(baseWaitTime), s);
 
       const now = Date.now();
+      let waitTime = newWaitTimes[queueNumber];
+
+      if (cheeseSelected) {
+        waitTime += 20; // ✅ เพิ่มเวลา 20 วิ ถ้ามีชีส
+      }
+
       queues[queueNumber] = {
-        waitTime: newWaitTimes[queueNumber],
-        entryTimestamp: now
+        waitTime: waitTime,
+        entryTimestamp: now,
+        cheese: cheeseSelected
       };
       usedQueueNumbers.add(queueNumber);
 
       db.ref("queues").set(queues);
-      showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(newWaitTimes[queueNumber])})`);
+      showNotification(
+        `เพิ่มคิว ${queueNumber} แล้ว (${formatTime(waitTime)}) ${cheeseSelected ? "🧀 เพิ่มชีส" : ""}`
+      );
+
+      // reset ปุ่มชีสกลับค่าเริ่มต้น
+      cheeseSelected = false;
+      toggleCheese();
     }
 
     function removeQueue(queueNumber) {
@@ -253,7 +294,8 @@
       db.ref("history").push({
         queueNumber: queueNumber,
         entryTime: entryTime,
-        exitTime: exitTime
+        exitTime: exitTime,
+        cheese: data.cheese || false
       });
 
       delete queues[queueNumber];
@@ -279,6 +321,9 @@
         div.classList.add("queue-box");
         div.innerHTML = `
           <p>คิว ${queueNumber}</p>
+          <p style="color: ${data.cheese ? 'orange' : '#555'};">
+            ${data.cheese ? "🧀 เพิ่มชีส" : "ไม่มีชีส"}
+          </p>
           <p>เหลือเวลา: ${formatTime(remaining)}</p>
           <button class="remove-btn" onclick="removeQueue(${queueNumber})">เสร็จ</button>
         `;
