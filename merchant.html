@@ -43,6 +43,7 @@
       cursor: pointer;
     }
     button:hover { background-color: #218838; }
+
     .queue-container {
       display: flex;
       flex-wrap: wrap;
@@ -52,13 +53,18 @@
     }
     .queue-box {
       border: 2px solid #333;
-      padding: 15px;
+      padding: 10px;
       border-radius: 10px;
       background-color: #d4edda;
-      width: 140px;
+      width: 130px;
+      height: 130px;
       text-align: center;
       font-weight: bold;
       position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 5px;
     }
     .remove-btn {
       background-color: #dc3545;
@@ -67,25 +73,17 @@
       padding: 5px;
       border-radius: 5px;
       cursor: pointer;
-      margin-top: 5px;
-      width: 100%;
     }
     .remove-btn:hover { background-color: #c82333; }
     .cheese-btn {
-      background-color: gold;
-      color: black;
+      background-color: #ffc107;
+      color: #333;
       border: none;
       padding: 5px;
       border-radius: 5px;
       cursor: pointer;
-      margin-top: 5px;
-      width: 100%;
-      font-weight: bold;
     }
-    .cheese-btn.active {
-      background-color: orange;
-      color: white;
-    }
+    .cheese-btn:hover { background-color: #e0a800; }
     .notification {
       margin-top: 15px;
       padding: 10px;
@@ -191,7 +189,7 @@
       const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
       const Wq = Lq / lambda;
       const W = Wq + (1 / mu);
-      return W * 60; // วินาที
+      return W * 60;
     }
 
     function formatTime(seconds) {
@@ -248,21 +246,12 @@
       const now = Date.now();
       queues[queueNumber] = {
         waitTime: newWaitTimes[queueNumber],
-        entryTimestamp: now,
-        cheese: false
+        entryTimestamp: now
       };
       usedQueueNumbers.add(queueNumber);
 
       db.ref("queues").set(queues);
       showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(newWaitTimes[queueNumber])})`);
-    }
-
-    function addCheese(queueNumber) {
-      if (!queues[queueNumber]) return;
-      queues[queueNumber].waitTime += 20;
-      queues[queueNumber].cheese = true;
-      db.ref("queues").set(queues);
-      showNotification(`คิว ${queueNumber} เพิ่มชีส 20 วินาที`);
     }
 
     function removeQueue(queueNumber) {
@@ -275,14 +264,24 @@
       db.ref("history").push({
         queueNumber: queueNumber,
         entryTime: entryTime,
-        exitTime: exitTime,
-        cheese: data.cheese || false
+        exitTime: exitTime
       });
 
       delete queues[queueNumber];
       usedQueueNumbers.delete(Number(queueNumber));
       db.ref("queues").set(queues);
       showNotification(`คิว ${queueNumber} เสร็จสิ้น`);
+    }
+
+    function addCheese(queueNumber) {
+      const container = document.getElementById("queues");
+      const box = [...container.children].find(div => div.querySelector('p').textContent.includes(queueNumber));
+      if (box) {
+        const cheese = document.createElement("div");
+        cheese.textContent = "🧀";
+        cheese.style.fontSize = "20px";
+        box.appendChild(cheese);
+      }
     }
 
     function updateQueues() {
@@ -302,11 +301,8 @@
         div.classList.add("queue-box");
         div.innerHTML = `
           <p>คิว ${queueNumber}</p>
-          <p style="color: ${data.cheese ? 'orange' : '#555'};">
-            ${data.cheese ? "🧀 เพิ่มชีสแล้ว" }
-          </p>
           <p>เหลือเวลา: ${formatTime(remaining)}</p>
-          <button class="cheese-btn" onclick="addCheese(${queueNumber})">เพิ่มชีส (+20s)</button>
+          <button class="cheese-btn" onclick="addCheese(${queueNumber})">ชีส 🧀</button>
           <button class="remove-btn" onclick="removeQueue(${queueNumber})">เสร็จ</button>
         `;
         container.appendChild(div);
