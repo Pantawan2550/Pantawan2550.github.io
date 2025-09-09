@@ -53,7 +53,7 @@
     }
     .queue-box {
       border: 2px solid #333;
-      padding: 10px;
+      padding: 5px;
       border-radius: 10px;
       background-color: #d4edda;
       width: 130px;
@@ -63,8 +63,15 @@
       position: relative;
       display: flex;
       flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .cheese-container {
+      display: flex;
+      flex-wrap: wrap;
       justify-content: center;
-      gap: 5px;
+      gap: 2px;
+      font-size: 18px;
     }
     .remove-btn {
       background-color: #dc3545;
@@ -274,13 +281,11 @@
     }
 
     function addCheese(queueNumber) {
-      const container = document.getElementById("queues");
-      const box = [...container.children].find(div => div.querySelector('p').textContent.includes(queueNumber));
-      if (box) {
-        const cheese = document.createElement("div");
+      const container = document.getElementById(`cheese-${queueNumber}`);
+      if (container) {
+        const cheese = document.createElement("span");
         cheese.textContent = "🧀";
-        cheese.style.fontSize = "20px";
-        box.appendChild(cheese);
+        container.appendChild(cheese);
       }
     }
 
@@ -302,6 +307,7 @@
         div.innerHTML = `
           <p>คิว ${queueNumber}</p>
           <p>เหลือเวลา: ${formatTime(remaining)}</p>
+          <div class="cheese-container" id="cheese-${queueNumber}"></div>
           <button class="cheese-btn" onclick="addCheese(${queueNumber})">ชีส 🧀</button>
           <button class="remove-btn" onclick="removeQueue(${queueNumber})">เสร็จ</button>
         `;
