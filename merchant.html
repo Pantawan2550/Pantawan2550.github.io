@@ -303,7 +303,7 @@
         div.innerHTML = `
           <p>คิว ${queueNumber}</p>
           <p style="color: ${data.cheese ? 'orange' : '#555'};">
-            ${data.cheese ? "🧀 เพิ่มชีสแล้ว" : "ไม่มีชีส"}
+            ${data.cheese ? "🧀 เพิ่มชีสแล้ว" }
           </p>
           <p>เหลือเวลา: ${formatTime(remaining)}</p>
           <button class="cheese-btn" onclick="addCheese(${queueNumber})">เพิ่มชีส (+20s)</button>
