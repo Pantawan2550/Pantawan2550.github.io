@@ -55,7 +55,7 @@
       padding: 15px;
       border-radius: 10px;
       background-color: #d4edda;
-      width: 120px;
+      width: 140px;
       text-align: center;
       font-weight: bold;
       position: relative;
@@ -67,12 +67,25 @@
       padding: 5px;
       border-radius: 5px;
       cursor: pointer;
-      position: absolute;
-      bottom: 5px;
-      left: 50%;
-      transform: translateX(-50%);
+      margin-top: 5px;
+      width: 100%;
     }
     .remove-btn:hover { background-color: #c82333; }
+    .cheese-btn {
+      background-color: gold;
+      color: black;
+      border: none;
+      padding: 5px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 5px;
+      width: 100%;
+      font-weight: bold;
+    }
+    .cheese-btn.active {
+      background-color: orange;
+      color: white;
+    }
     .notification {
       margin-top: 15px;
       padding: 10px;
@@ -89,20 +102,6 @@
       font-size: 20px;
       margin-bottom: 10px;
       color: #555;
-    }
-    /* ปุ่มเพิ่มชีส */
-    .cheese-btn {
-      background: gold;
-      color: black;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .cheese-btn.active {
-      background: orange;
-      color: white;
     }
   </style>
 </head>
@@ -131,7 +130,6 @@
         <label for="queueNumber">หมายเลขคิว:</label>
         <input type="number" id="queueNumber" min="1" />
       </div>
-      <button id="cheeseBtn" class="cheese-btn" onclick="toggleCheese()">เพิ่มชีส</button>
       <button onclick="addQueue()">เพิ่มคิว</button>
     </div>
 
@@ -162,24 +160,11 @@
 
     let queues = {};
     const usedQueueNumbers = new Set();
-    let cheeseSelected = false;
 
     setInterval(() => {
       document.getElementById("clock").textContent =
         `เวลา: ${new Date().toLocaleTimeString("th-TH", { hour12: false })}`;
     }, 1000);
-
-    function toggleCheese() {
-      cheeseSelected = !cheeseSelected;
-      const btn = document.getElementById("cheeseBtn");
-      if (cheeseSelected) {
-        btn.textContent = "✅ เพิ่มชีส";
-        btn.classList.add("active");
-      } else {
-        btn.textContent = "เพิ่มชีส";
-        btn.classList.remove("active");
-      }
-    }
 
     function showNotification(message) {
       const note = document.getElementById("notification");
@@ -205,7 +190,7 @@
 
       const Lq = (P0 * Math.pow(lambda / mu, s) * ρ) / (factorial(s) * Math.pow(1 - ρ, 2));
       const Wq = Lq / lambda;
-      const W = Wq + (1 / mu); 
+      const W = Wq + (1 / mu);
       return W * 60; // วินาที
     }
 
@@ -261,27 +246,23 @@
       const newWaitTimes = calculateWaitTimes(allQueueNumbers, Math.ceil(baseWaitTime), s);
 
       const now = Date.now();
-      let waitTime = newWaitTimes[queueNumber];
-
-      if (cheeseSelected) {
-        waitTime += 20; // ✅ เพิ่มเวลา 20 วิ ถ้ามีชีส
-      }
-
       queues[queueNumber] = {
-        waitTime: waitTime,
+        waitTime: newWaitTimes[queueNumber],
         entryTimestamp: now,
-        cheese: cheeseSelected
+        cheese: false
       };
       usedQueueNumbers.add(queueNumber);
 
       db.ref("queues").set(queues);
-      showNotification(
-        `เพิ่มคิว ${queueNumber} แล้ว (${formatTime(waitTime)}) ${cheeseSelected ? "🧀 เพิ่มชีส" : ""}`
-      );
+      showNotification(`เพิ่มคิว ${queueNumber} แล้ว (${formatTime(newWaitTimes[queueNumber])})`);
+    }
 
-      // reset ปุ่มชีสกลับค่าเริ่มต้น
-      cheeseSelected = false;
-      toggleCheese();
+    function addCheese(queueNumber) {
+      if (!queues[queueNumber]) return;
+      queues[queueNumber].waitTime += 20;
+      queues[queueNumber].cheese = true;
+      db.ref("queues").set(queues);
+      showNotification(`คิว ${queueNumber} เพิ่มชีส +20 วินาที`);
     }
 
     function removeQueue(queueNumber) {
@@ -322,9 +303,10 @@
         div.innerHTML = `
           <p>คิว ${queueNumber}</p>
           <p style="color: ${data.cheese ? 'orange' : '#555'};">
-            ${data.cheese ? "🧀 เพิ่มชีส" : "ไม่มีชีส"}
+            ${data.cheese ? "🧀 เพิ่มชีสแล้ว" : "ไม่มีชีส"}
           </p>
           <p>เหลือเวลา: ${formatTime(remaining)}</p>
+          <button class="cheese-btn" onclick="addCheese(${queueNumber})">เพิ่มชีส (+20s)</button>
           <button class="remove-btn" onclick="removeQueue(${queueNumber})">เสร็จ</button>
         `;
         container.appendChild(div);
